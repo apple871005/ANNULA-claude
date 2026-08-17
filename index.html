@@ -608,7 +608,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     <div class="section-head reveal">
       <p class="eyebrow" style="justify-content:center;">精選商品</p>
       <h2 class="featured-title">Featured Products</h2>
-      <p>從喜光耐曬到室內耐陰，精選最受空間喜愛的植物型錄。</p>
+      <p>精選最受空間喜愛的植物型錄。</p>
     </div>
 
     <div class="plant-grid" id="featuredGrid"></div>
@@ -1016,7 +1016,7 @@ function productCardHTML(p, labelMap, i, displayLight){
   return `
     <div class="plant-card light-${light}" style="animation-delay:${(i||0)*0.05}s" data-id="${p.id}">
       <div class="pc-icon-wrap${p.image ? ' has-photo' : ''}">${visual}</div>
-      <p class="pc-tag">${labelMap[light]}</p>
+      ${labelMap ? `<p class="pc-tag">${labelMap[light]}</p>` : ''}
       <h4>${p.name}</h4>
       <span class="pc-en">${p.en}</span>
       <div class="pc-meta"><span>高度 <span class="num">${p.height}</span></span><span class="price">NT$${p.price.toLocaleString()}${p.priceUnit ? '／'+p.priceUnit : ''}</span></div>
@@ -1042,7 +1042,7 @@ function renderFeatured(){
   } else {
     list = shopProducts.filter(p=> p.featured);
   }
-  document.getElementById('featuredGrid').innerHTML = list.map((p,i)=> productCardHTML(p, LIGHT_LABEL, i)).join('');
+  document.getElementById('featuredGrid').innerHTML = list.map((p,i)=> productCardHTML(p, null, i)).join('');
   bindProductCards('featuredGrid');
   emptyState.classList.toggle('show', list.length===0);
   document.getElementById('emptyText').textContent = `找不到符合「${featuredSearch}」的商品，試試其他關鍵字`;
