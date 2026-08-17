@@ -423,6 +423,9 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .pm-price{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin-bottom:22px;}
 .pm-price span{font-size:12.5px;font-family:'Noto Sans TC';color:var(--ink-soft);font-weight:400;}
 .pm-care{margin-bottom:26px;}
+.pm-detail-img{display:none;margin-bottom:26px;}
+.pm-detail-img.show{display:block;}
+.pm-detail-img img{width:100%;border-radius:var(--r-md);display:block;}
 .pm-care li{display:flex;gap:10px;font-size:14px;color:var(--ink-soft);padding:8px 0;border-bottom:1px solid var(--line);}
 .pm-care li .icon{width:14px;height:14px;color:var(--accent);margin-top:3px;flex-shrink:0;}
 .pm-actions{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;}
@@ -796,6 +799,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
       <span class="pm-en" id="pmEn"></span>
       <div class="pm-price" id="pmPrice"></div>
       <ul class="pm-care" id="pmCare"></ul>
+      <div class="pm-detail-img" id="pmDetailImg"></div>
       <div class="pm-actions">
         <div class="qty-stepper">
           <button id="pmMinus"><svg class="icon" viewBox="0 0 24 24"><use href="#i-minus"/></svg></button>
@@ -914,6 +918,13 @@ const PRODUCTS = [
    alt:"富貴榕 室內室外落地型水泥盆栽 Ficus altissima Golden Edged - 招財樹發財樹 搭配現代清水模盆器 適合客廳與商業空間綠化觀葉植物",
    imgTitle:'點擊查看細節與照顧方式',
    care:['金斑交織的圓潤闊葉，寓意富貴招財與納福。','專人定期維護服務，讓您免除照顧負擔與植物枯萎的風險。','價格包含每週養護、植栽與盆器的租賃費用。']},
+  {id:'spathiphyllum-rental', category:'rental', light:'semi', name:'白鶴芋', en:'Spathiphyllum Kochii', height:'60–80cm', price:600, priceUnit:'月',
+   image:'plant-rental/Spathiphyllum kochii-01.jpeg',
+   alt:'白鶴芋 室內落地型水泥盆栽 - 濃綠大葉片 辦公室植物 淨化空氣',
+   imgTitle:'點擊查看細節與照顧方式',
+   detailImage:'plant-rental/Spathiphyllum kochii-02.jpeg',
+   detailAlt:'白鶴芋 細節照 - 雪白苞片與濃綠葉片特寫',
+   care:['濃綠葉片優雅地舒展，雪白苞片如鶴般挺立。','專人定期維護服務，讓您免除照顧負擔與植物枯萎的風險。','價格包含每週養護、植栽與盆器的租賃費用。']},
 ];
 const LIGHT_LABEL = {sun:'☀️ 喜光耐曬型', semi:'🌤️ 明亮散光型', shade:'☁️ 室內耐陰型'};
 const BUILD_LABEL = {sun:'喜光耐曬型', semi:'明亮散光型', shade:'室內耐陰型'};
@@ -1091,6 +1102,11 @@ function openProduct(id){
   document.getElementById('pmEn').textContent = currentProduct.en;
   document.getElementById('pmPrice').innerHTML = 'NT$' + currentProduct.price.toLocaleString() + '<span> ／' + (currentProduct.priceUnit || '株') + '</span>';
   document.getElementById('pmCare').innerHTML = currentProduct.care.map(c=>`<li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>${c}</li>`).join('');
+  const pmDetailImg = document.getElementById('pmDetailImg');
+  pmDetailImg.classList.toggle('show', !!currentProduct.detailImage);
+  pmDetailImg.innerHTML = currentProduct.detailImage
+    ? `<img src="${currentProduct.detailImage}" alt="${currentProduct.detailAlt || currentProduct.alt}" loading="lazy">`
+    : '';
   document.getElementById('pmQty').textContent = pmQty;
   openOverlay(productModal);
 }
