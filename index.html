@@ -231,7 +231,7 @@ ul{list-style:none;}
 .tag{font-size:12px;padding:5px 12px;border-radius:var(--r-full);background:rgba(74,93,78,.1);color:var(--accent-dark);font-weight:500;}
 
 /* ===================== RENTAL ===================== */
-#rental{background:var(--bg-card);color:var(--ink);border-radius:56px;margin:0 16px;overflow:hidden;}
+#rental{background:#f5efe8;color:var(--ink);border-radius:56px;margin:0 16px;overflow:hidden;}
 @media (max-width:640px){ #rental{border-radius:32px;margin:0 8px;} }
 .tabs{display:flex;justify-content:center;gap:8px;margin-bottom:56px;flex-wrap:wrap;}
 .tab-btn{
@@ -327,13 +327,19 @@ ul{list-style:none;}
 #products .plant-card:hover{transform:translateY(-3px);box-shadow:none;}
 #products .plant-card:hover .pc-icon-wrap{transform:scale(1.03);}
 #products .plant-card .pc-meta{border-top:none;padding-top:0;margin-top:16px;}
-.plant-card .pc-icon-wrap{width:100%;aspect-ratio:3/4;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:transform .4s var(--ease);overflow:hidden;}
+#rental .plant-card{background:none;border:none;padding:0;}
+#rental .plant-card:hover{transform:translateY(-3px);box-shadow:none;}
+#rental .plant-card:hover .pc-icon-wrap{transform:scale(1.03);}
+#rental .plant-card .pc-meta{border-top:none;padding-top:0;margin-top:16px;}
+.plant-card .pc-icon-wrap{position:relative;width:100%;aspect-ratio:3/4;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin-bottom:18px;transition:transform .4s var(--ease);overflow:hidden;}
 .plant-card .pc-icon-wrap .icon{width:52%;height:52%;color:var(--accent-dark);stroke-width:1.3;}
 .light-sun .pc-icon-wrap{background:#F3E7CF;}
 .light-semi .pc-icon-wrap{background:#E7EBDD;}
 .light-shade .pc-icon-wrap{background:#DCE3D8;}
 .pc-icon-wrap.has-photo{background:none;}
 .pc-icon-wrap.has-photo img{width:100%;height:100%;object-fit:cover;}
+.pc-icon-wrap .pc-img-detail{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s var(--ease);}
+.plant-card:hover .pc-img-detail{opacity:1;}
 .pc-tag{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--wood);display:flex;align-items:center;gap:5px;margin-bottom:8px;}
 .plant-card h4{font-size:16.5px;font-weight:700;}
 .plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:14.5px;margin-bottom:12px;display:block;}
@@ -414,7 +420,8 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 @media (max-width:680px){.pm-visual{border-radius:var(--r-lg) var(--r-lg) 0 0;padding:36px;}}
 .pm-visual .icon{width:60%;height:60%;max-width:220px;color:var(--accent-dark);stroke-width:1.2;}
 .pm-visual.has-photo{background:none !important;padding:0;}
-.pm-visual.has-photo img{width:100%;height:100%;object-fit:cover;}
+.pm-visual.has-photo img{width:80%;height:80%;object-fit:cover;border-radius:var(--r-md);}
+.pm-visual.has-multi img{cursor:pointer;}
 .pm-body{padding:50px 46px;}
 @media (max-width:680px){.pm-body{padding:34px 30px 40px;}}
 .pm-tag{font-size:12px;font-weight:600;color:var(--wood);letter-spacing:.06em;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
@@ -423,9 +430,6 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .pm-price{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin-bottom:22px;}
 .pm-price span{font-size:12.5px;font-family:'Noto Sans TC';color:var(--ink-soft);font-weight:400;}
 .pm-care{margin-bottom:26px;}
-.pm-detail-img{display:none;margin-bottom:26px;}
-.pm-detail-img.show{display:block;}
-.pm-detail-img img{width:100%;border-radius:var(--r-md);display:block;}
 .pm-care li{display:flex;gap:10px;font-size:14px;color:var(--ink-soft);padding:8px 0;border-bottom:1px solid var(--line);}
 .pm-care li .icon{width:14px;height:14px;color:var(--accent);margin-top:3px;flex-shrink:0;}
 .pm-actions{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;}
@@ -799,7 +803,6 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
       <span class="pm-en" id="pmEn"></span>
       <div class="pm-price" id="pmPrice"></div>
       <ul class="pm-care" id="pmCare"></ul>
-      <div class="pm-detail-img" id="pmDetailImg"></div>
       <div class="pm-actions">
         <div class="qty-stepper">
           <button id="pmMinus"><svg class="icon" viewBox="0 0 24 24"><use href="#i-minus"/></svg></button>
@@ -1022,7 +1025,7 @@ function openPackage(key){
 function productCardHTML(p, labelMap, i, displayLight){
   const light = displayLight || p.light;
   const visual = p.image
-    ? `<img src="${p.image}" alt="${p.alt}" title="${p.imgTitle || '點擊查看細節與照顧方式'}" loading="lazy">`
+    ? `<img src="${p.image}" alt="${p.alt}" title="${p.imgTitle || '點擊查看細節與照顧方式'}" loading="lazy">${p.detailImage ? `<img class="pc-img-detail" src="${p.detailImage}" alt="${p.detailAlt || p.alt}" loading="lazy">` : ''}`
     : `<svg class="icon" viewBox="0 0 64 64"><use href="#${p.icon}"/></svg>`;
   return `
     <div class="plant-card light-${light}" style="animation-delay:${(i||0)*0.05}s" data-id="${p.id}">
@@ -1087,26 +1090,43 @@ const scrim = document.getElementById('scrim');
 const productModal = document.getElementById('productModal');
 let pmQty = 1;
 let currentProduct = null;
+let pmImageIndex = 0;
+
+function pmImageList(){
+  if(!currentProduct) return [];
+  const imgs = [];
+  if(currentProduct.image) imgs.push({src:currentProduct.image, alt:currentProduct.alt});
+  if(currentProduct.detailImage) imgs.push({src:currentProduct.detailImage, alt:currentProduct.detailAlt || currentProduct.alt});
+  return imgs;
+}
+function renderPmVisual(){
+  const imgs = pmImageList();
+  const current = imgs[pmImageIndex];
+  const pmVisual = document.getElementById('pmVisual');
+  pmVisual.innerHTML = current
+    ? `<img src="${current.src}" alt="${current.alt}" title="${currentProduct.imgTitle || '點擊查看細節與照顧方式'}">`
+    : `<svg class="icon" viewBox="0 0 64 64"><use href="#${currentProduct.icon}"/></svg>`;
+  pmVisual.className = 'pm-visual light-' + currentProduct.light + (current ? ' has-photo' : '') + (imgs.length>1 ? ' has-multi' : '');
+  pmVisual.style.background = current ? '' : (currentProduct.light==='sun'?'#F3E7CF':currentProduct.light==='semi'?'#E7EBDD':'#DCE3D8');
+}
+document.getElementById('pmVisual').addEventListener('click', ()=>{
+  const imgs = pmImageList();
+  if(imgs.length<2) return;
+  pmImageIndex = (pmImageIndex+1) % imgs.length;
+  renderPmVisual();
+});
 
 function openProduct(id){
   currentProduct = PRODUCTS.find(p=> p.id===id);
   if(!currentProduct) return;
   pmQty = 1;
-  document.getElementById('pmVisual').innerHTML = currentProduct.image
-    ? `<img src="${currentProduct.image}" alt="${currentProduct.alt}" title="${currentProduct.imgTitle || '點擊查看細節與照顧方式'}">`
-    : `<svg class="icon" viewBox="0 0 64 64"><use href="#${currentProduct.icon}"/></svg>`;
-  document.getElementById('pmVisual').className = 'pm-visual light-' + currentProduct.light + (currentProduct.image ? ' has-photo' : '');
-  document.getElementById('pmVisual').style.background = currentProduct.image ? '' : (currentProduct.light==='sun'?'#F3E7CF':currentProduct.light==='semi'?'#E7EBDD':'#DCE3D8');
+  pmImageIndex = 0;
+  renderPmVisual();
   document.getElementById('pmTag').innerHTML = LIGHT_LABEL[currentProduct.light] + ' ・ 高度 <span class="num">' + currentProduct.height + '</span>';
   document.getElementById('pmName').textContent = currentProduct.name;
   document.getElementById('pmEn').textContent = currentProduct.en;
   document.getElementById('pmPrice').innerHTML = 'NT$' + currentProduct.price.toLocaleString() + '<span> ／' + (currentProduct.priceUnit || '株') + '</span>';
   document.getElementById('pmCare').innerHTML = currentProduct.care.map(c=>`<li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>${c}</li>`).join('');
-  const pmDetailImg = document.getElementById('pmDetailImg');
-  pmDetailImg.classList.toggle('show', !!currentProduct.detailImage);
-  pmDetailImg.innerHTML = currentProduct.detailImage
-    ? `<img src="${currentProduct.detailImage}" alt="${currentProduct.detailAlt || currentProduct.alt}" loading="lazy">`
-    : '';
   document.getElementById('pmQty').textContent = pmQty;
   openOverlay(productModal);
 }
