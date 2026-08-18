@@ -938,7 +938,7 @@ const PRODUCTS = [
    detailImage:'plant-rental/Tournefortia argentea-02.jpeg',
    detailAlt:'白水木 細節照 - 銀白絨毛葉片特寫',
    care:['葉片覆蓋銀白色絨毛，枝幹姿態蜿蜒優雅。','專人定期維護服務，讓您免除照顧負擔與植物枯萎的風險。','價格包含每週養護、植栽與盆器的租賃費用。']},
-  {id:'altissima-gold-rental', category:'rental', light:'sun', lightExtra:['semi'], name:'斑葉富貴榕', en:"Ficus Altissima 'Golden Edged'", height:'180–230cm', price:1200, priceUnit:'月', cardImgTransform:'scale(1.04);transform-origin:50% 216%',
+  {id:'altissima-gold-rental', category:'rental', light:'sun', lightExtra:['semi'], name:'斑葉富貴榕', en:"Ficus Altissima 'Golden Edged'", height:'180–230cm', price:1200, priceUnit:'月',
    image:"plant-rental/Ficus altissima 'Golden Edged'-01.jpeg",
    alt:"斑葉富貴榕 室內落地型水泥盆栽 - 綠黃金斑交織闊葉 適合客廳與辦公室明亮處觀葉植物 招財植物",
    imgTitle:'點擊查看細節與照顧方式',
@@ -959,7 +959,7 @@ const PRODUCTS = [
    detailImage:'plant-rental/Licuala grandis-02.jpeg',
    detailAlt:'圓葉刺軸櫚 細節照 - 圓扇形波浪摺痕葉片特寫',
    care:['圓扇形波浪摺痕葉片，且耐陰性佳適應力高。','專人定期維護服務，讓您免除照顧負擔與植物枯萎的風險。','價格包含每週養護、植栽與盆器的租賃費用。']},
-  {id:'plerandra-rental', category:'rental', light:'semi', name:'孔雀木', en:'Plerandra Elegantissima', height:'180–230cm', price:1200, priceUnit:'月', cardImgTransform:'scale(1.0833);transform-origin:50% 164%',
+  {id:'plerandra-rental', category:'rental', light:'semi', name:'孔雀木', en:'Plerandra Elegantissima', height:'180–230cm', price:1200, priceUnit:'月',
    image:'plant-rental/Plerandra elegantissima-01.jpeg',
    alt:'孔雀木 室內落地型水泥盆栽 - 掌狀鋸齒細長葉片 適合客廳辦公室明亮處與耐陰觀葉植物',
    imgTitle:'點擊查看細節與照顧方式',
@@ -1083,9 +1083,8 @@ function openPackage(key){
    ============================================================ */
 function productCardHTML(p, labelMap, i, displayLight){
   const light = displayLight || p.light;
-  const cardImgStyle = p.cardImgTransform ? ` style="transform:${p.cardImgTransform}"` : '';
   const visual = p.image
-    ? `<img src="${p.image}" alt="${p.alt}" title="${p.imgTitle || '點擊查看細節與照顧方式'}" loading="lazy"${cardImgStyle}>${p.detailImage ? `<img class="pc-img-detail" src="${p.detailImage}" alt="${p.detailAlt || p.alt}" loading="lazy">` : ''}`
+    ? `<img src="${p.image}" alt="${p.alt}" title="${p.imgTitle || '點擊查看細節與照顧方式'}" loading="lazy">${p.detailImage ? `<img class="pc-img-detail" src="${p.detailImage}" alt="${p.detailAlt || p.alt}" loading="lazy">` : ''}`
     : `<svg class="icon" viewBox="0 0 64 64"><use href="#${p.icon}"/></svg>`;
   return `
     <div class="plant-card light-${light}" style="animation-delay:${(i||0)*0.05}s" data-id="${p.id}">
