@@ -1080,6 +1080,7 @@ function renderFeatured(){
   } else {
     list = shopProducts.filter(p=> p.featured);
   }
+  list.sort((a,b)=> a.price-b.price);
   document.getElementById('featuredGrid').innerHTML = list.map((p,i)=> productCardHTML(p, null, i)).join('');
   bindProductCards('featuredGrid');
   emptyState.classList.toggle('show', list.length===0);
@@ -1098,7 +1099,8 @@ let buildLight = 'sun';
 function renderBuildGrid(){
   document.querySelectorAll('.tab-panel[data-panel="build"] .filter-btn').forEach(b=> b.classList.toggle('active', b.dataset.blight===buildLight));
   document.getElementById('buildDesc').innerHTML = BUILD_DESC[buildLight];
-  const list = PRODUCTS.filter(p=> p.category==='rental' && (p.light===buildLight || (p.lightExtra && p.lightExtra.includes(buildLight))));
+  const list = PRODUCTS.filter(p=> p.category==='rental' && (p.light===buildLight || (p.lightExtra && p.lightExtra.includes(buildLight))))
+    .sort((a,b)=> a.price-b.price);
   document.getElementById('buildGrid').innerHTML = list.map((p,i)=> productCardHTML(p, BUILD_LABEL, i, buildLight)).join('');
   bindProductCards('buildGrid');
 }
