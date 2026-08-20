@@ -1140,14 +1140,17 @@ function stripPhotoBackground(img){
     let br=0, bgc=0, bb=0;
     corners.forEach(([x,y])=>{ const i=(y*w+x)*4; br+=data[i]; bgc+=data[i+1]; bb+=data[i+2]; });
     br/=4; bgc/=4; bb/=4;
-    const threshold = 18, feather = 34;
+    const threshold = 18, feather = 46;
     for(let i=0;i<data.length;i+=4){
       const dr=data[i]-br, dg=data[i+1]-bgc, db=data[i+2]-bb;
       const dist = Math.sqrt(dr*dr+dg*dg+db*db);
       if(dist < threshold) data[i+3] = 0;
       else if(dist < threshold+feather) data[i+3] = Math.round(255*(dist-threshold)/feather);
     }
-    boxBlurAlpha(data, w, h, Math.round(w*0.012));
+    const blurRadius = Math.round(w*0.012);
+    boxBlurAlpha(data, w, h, blurRadius);
+    boxBlurAlpha(data, w, h, blurRadius);
+    boxBlurAlpha(data, w, h, blurRadius);
     for(let i=0;i<data.length;i+=4){
       const a = data[i+3];
       if(a>0 && a<255){
