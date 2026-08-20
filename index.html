@@ -1094,6 +1094,42 @@ function bindProductCards(containerId){
   });
 }
 
+/* ---- Auto background removal (chroma-key against photo corners) ---- */
+function stripPhotoBackground(img){
+  if(img.dataset.bgStripped) return;
+  const run = ()=>{
+    const w = img.naturalWidth, h = img.naturalHeight;
+    if(!w || !h) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    let imageData;
+    try{ imageData = ctx.getImageData(0, 0, w, h); }
+    catch(e){ return; }
+    const data = imageData.data;
+    const corners = [[2,2],[w-3,2],[2,h-3],[w-3,h-3]];
+    let br=0, bgc=0, bb=0;
+    corners.forEach(([x,y])=>{ const i=(y*w+x)*4; br+=data[i]; bgc+=data[i+1]; bb+=data[i+2]; });
+    br/=4; bgc/=4; bb/=4;
+    const threshold = 26, feather = 20;
+    for(let i=0;i<data.length;i+=4){
+      const dr=data[i]-br, dg=data[i+1]-bgc, db=data[i+2]-bb;
+      const dist = Math.sqrt(dr*dr+dg*dg+db*db);
+      if(dist < threshold) data[i+3] = 0;
+      else if(dist < threshold+feather) data[i+3] = Math.round(255*(dist-threshold)/feather);
+    }
+    ctx.putImageData(imageData, 0, 0);
+    img.src = canvas.toDataURL('image/png');
+    img.dataset.bgStripped = '1';
+  };
+  if(img.complete && img.naturalWidth) run();
+  else img.addEventListener('load', run, {once:true});
+}
+function stripFeaturedBackgrounds(){
+  document.querySelectorAll('#featuredGrid .pc-icon-wrap img').forEach(stripPhotoBackground);
+}
+
 /* ---- Featured Products (#products) ---- */
 const emptyState = document.getElementById('emptyState');
 let showAllFeatured = false;
@@ -1111,6 +1147,7 @@ function renderFeatured(){
   list.sort((a,b)=> a.price-b.price);
   document.getElementById('featuredGrid').innerHTML = list.map((p,i)=> productCardHTML(p, null, i)).join('');
   bindProductCards('featuredGrid');
+  stripFeaturedBackgrounds();
   emptyState.classList.toggle('show', list.length===0);
   document.getElementById('emptyText').textContent = `找不到符合「${featuredSearch}」的商品，試試其他關鍵字`;
   const viewAllBtn = document.getElementById('viewAllBtn');
