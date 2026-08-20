@@ -1151,9 +1151,7 @@ function stripPhotoBackground(img){
       data[i+3] = a;
       origAlpha[p] = a;
     }
-    const blurRadius = Math.round(w*0.012);
-    boxBlurAlpha(data, w, h, blurRadius);
-    boxBlurAlpha(data, w, h, blurRadius);
+    const blurRadius = Math.round(w*0.005);
     boxBlurAlpha(data, w, h, blurRadius);
     for(let i=0, p=0;i<data.length;i+=4, p++){
       const a = data[i+3];
