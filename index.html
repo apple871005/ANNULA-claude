@@ -1181,7 +1181,7 @@ function stripPhotoBackground(img){
   else img.addEventListener('load', run, {once:true});
 }
 function stripFeaturedBackgrounds(){
-  document.querySelectorAll('#featuredGrid .pc-icon-wrap img').forEach(stripPhotoBackground);
+  document.querySelectorAll('#featuredGrid .pc-icon-wrap img:not(.pc-img-detail)').forEach(stripPhotoBackground);
 }
 
 /* ---- Featured Products (#products) ---- */
