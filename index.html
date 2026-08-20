@@ -1095,6 +1095,34 @@ function bindProductCards(containerId){
 }
 
 /* ---- Auto background removal (chroma-key against photo corners) ---- */
+function boxBlurAlpha(data, w, h, radius){
+  const n = w*h;
+  const src = new Float32Array(n);
+  for(let i=0;i<n;i++) src[i] = data[i*4+3];
+  const tmp = new Float32Array(n);
+  const span = radius*2+1;
+  for(let y=0;y<h;y++){
+    const row = y*w;
+    let sum = 0;
+    for(let x=-radius;x<=radius;x++) sum += src[row + Math.min(w-1,Math.max(0,x))];
+    for(let x=0;x<w;x++){
+      tmp[row+x] = sum/span;
+      const outX = Math.min(w-1,Math.max(0,x-radius));
+      const inX = Math.min(w-1,Math.max(0,x+radius+1));
+      sum += src[row+inX] - src[row+outX];
+    }
+  }
+  for(let x=0;x<w;x++){
+    let sum = 0;
+    for(let y=-radius;y<=radius;y++) sum += tmp[Math.min(h-1,Math.max(0,y))*w + x];
+    for(let y=0;y<h;y++){
+      data[(y*w+x)*4+3] = Math.round(sum/span);
+      const outY = Math.min(h-1,Math.max(0,y-radius));
+      const inY = Math.min(h-1,Math.max(0,y+radius+1));
+      sum += tmp[inY*w+x] - tmp[outY*w+x];
+    }
+  }
+}
 function stripPhotoBackground(img){
   if(img.dataset.bgStripped) return;
   const run = ()=>{
@@ -1112,12 +1140,22 @@ function stripPhotoBackground(img){
     let br=0, bgc=0, bb=0;
     corners.forEach(([x,y])=>{ const i=(y*w+x)*4; br+=data[i]; bgc+=data[i+1]; bb+=data[i+2]; });
     br/=4; bgc/=4; bb/=4;
-    const threshold = 26, feather = 20;
+    const threshold = 18, feather = 34;
     for(let i=0;i<data.length;i+=4){
       const dr=data[i]-br, dg=data[i+1]-bgc, db=data[i+2]-bb;
       const dist = Math.sqrt(dr*dr+dg*dg+db*db);
       if(dist < threshold) data[i+3] = 0;
       else if(dist < threshold+feather) data[i+3] = Math.round(255*(dist-threshold)/feather);
+    }
+    boxBlurAlpha(data, w, h, Math.round(w*0.012));
+    for(let i=0;i<data.length;i+=4){
+      const a = data[i+3];
+      if(a>0 && a<255){
+        const af = a/255;
+        data[i]   = Math.min(255,Math.max(0, Math.round((data[i]   - (1-af)*br )/af)));
+        data[i+1] = Math.min(255,Math.max(0, Math.round((data[i+1] - (1-af)*bgc)/af)));
+        data[i+2] = Math.min(255,Math.max(0, Math.round((data[i+2] - (1-af)*bb )/af)));
+      }
     }
     ctx.putImageData(imageData, 0, 0);
     img.src = canvas.toDataURL('image/png');
