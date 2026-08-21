@@ -1220,6 +1220,9 @@ function stripPhotoBackground(img){
 function stripFeaturedBackgrounds(){
   document.querySelectorAll('#featuredGrid .pc-icon-wrap img:not(.pc-img-detail)').forEach(stripPhotoBackground);
 }
+function stripBuildBackgrounds(){
+  document.querySelectorAll('#buildGrid .pc-icon-wrap img:not(.pc-img-detail)').forEach(stripPhotoBackground);
+}
 
 /* ---- Featured Products (#products) ---- */
 const emptyState = document.getElementById('emptyState');
@@ -1259,6 +1262,7 @@ function renderBuildGrid(){
     .sort((a,b)=> a.price-b.price);
   document.getElementById('buildGrid').innerHTML = list.map((p,i)=> productCardHTML(p, BUILD_LABEL, i, buildLight)).join('');
   bindProductCards('buildGrid');
+  stripBuildBackgrounds();
 }
 document.querySelectorAll('.tab-panel[data-panel="build"] .filter-btn').forEach(b=>{
   b.addEventListener('click', ()=>{ buildLight = b.dataset.blight; renderBuildGrid(); });
