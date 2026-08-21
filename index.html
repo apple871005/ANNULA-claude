@@ -71,6 +71,7 @@ ul{list-style:none;}
   display:flex;align-items:center;gap:10px;
 }
 .eyebrow::before{content:'';width:22px;height:1px;background:var(--wood);display:inline-block;}
+#products .eyebrow, #care .eyebrow, #about .eyebrow{font-size:17px;}
 .section{padding:120px 0;position:relative;}
 @media (max-width:860px){ .section{padding:80px 0;} .container{padding:0 20px;} }
 .btn{
@@ -207,6 +208,7 @@ ul{list-style:none;}
 .section-head{max-width:640px;margin:0 auto 64px;text-align:center;}
 .section-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:700;margin:16px 0 18px;letter-spacing:.01em;}
 .section-head p{color:var(--ink-soft);font-size:15.5px;max-width:46ch;margin:0 auto;}
+#products .section-head p{font-size:17px;}
 .section-head.left{margin:0 0 56px;text-align:left;}
 .section-head.left p{margin:0;}
 .featured-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;letter-spacing:.01em;}
@@ -361,7 +363,7 @@ ul{list-style:none;}
 #care .care-img{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/5;box-shadow:var(--shadow-soft);}
 #care .care-img img{width:100%;height:100%;object-fit:cover;}
 #care h2{font-size:clamp(24px,3.2vw,34px);font-weight:700;margin:16px 0 18px;}
-#care p.desc{color:var(--ink-soft);font-size:15.5px;margin-bottom:28px;max-width:48ch;}
+#care p.desc{color:var(--ink-soft);font-size:17px;margin-bottom:28px;max-width:48ch;}
 .check-list{margin-bottom:30px;}
 .check-list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;}
 .check-list li .icon{width:16px;height:16px;color:var(--accent);flex-shrink:0;}
@@ -375,7 +377,7 @@ ul{list-style:none;}
 @media (max-width:900px){.about-wrap{grid-template-columns:1fr;gap:40px;}}
 .about-wrap h2{margin:16px 0 22px;line-height:1.4;}
 .about-title{font-family:'Italiana',serif;font-weight:400;font-style:normal;font-size:clamp(24px,3vw,36px);letter-spacing:.02em;}
-.about-wrap p.story{color:var(--ink-soft);font-size:15.5px;margin-bottom:16px;line-height:1.9;}
+.about-wrap p.story{color:var(--ink-soft);font-size:17px;margin-bottom:16px;line-height:1.9;}
 .about-img{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/5;box-shadow:var(--shadow-soft);}
 .about-img img{width:100%;height:100%;object-fit:cover;}
 @media (max-width:900px){.about-img{aspect-ratio:16/10;}}
@@ -607,7 +609,6 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   <div class="hero-veil"></div>
   <div class="hero-content">
     <h1>Grow with spirit.</h1>
-    <p class="sub">時間在樹木裡刻下年輪，生命在空間裡尋找光影。</p>
     <div class="hero-cta">
       <a href="#products" class="btn btn-primary">Shop Now</a>
       <a href="#rental" class="btn btn-outline-light">了解綠意空間訂閱服務</a>
@@ -925,6 +926,13 @@ const PRODUCTS = [
    imgTitle:'點擊查看細節與照顧方式',
    detailImage:"product/Dioon edule Lindl.-02.jpeg",
    detailAlt:"雙子蘇鐵 細節照",
+   care:[]},
+  {id:'asparagus-setaceus', category:'shop', light:'semi', name:'文竹', en:"Asparagus Setaceus", height:'—', price:0, featured:true,
+   image:"product/Asparagus setaceus-01.jpeg",
+   alt:"文竹",
+   imgTitle:'點擊查看細節與照顧方式',
+   detailImage:"product/Asparagus setaceus-02.jpeg",
+   detailAlt:"文竹 細節照",
    care:[]},
   {id:'spathiphyllum-rental', category:'rental', light:'semi', name:'白鶴芋', en:'Spathiphyllum spp', height:'60–80cm', price:600, priceUnit:'月',
    image:'plant-rental/Spathiphyllum spp-01.jpeg',
