@@ -386,7 +386,7 @@ ul{list-style:none;}
 #about{background:var(--bg-card);border-radius:56px;margin:0 16px;overflow:hidden;}
 @media (max-width:640px){ #about{border-radius:32px;margin:0 8px;} }
 @media (max-width:768px){
-  #about{padding-top:200px;}
+  #about{padding-top:180px;}
   .about-rings{
     -webkit-mask-image:linear-gradient(to bottom, black 0%, black 38%, transparent 82%);
     mask-image:linear-gradient(to bottom, black 0%, black 38%, transparent 82%);
@@ -1124,27 +1124,24 @@ revealEls.forEach(el=> io.observe(el));
   }
 
   /* ============================================================
-     TREE-RING MATHEMATICS — literal concentric circular arcs.
+     SINGLE-CENTER TREE RINGS, top-right corner.
 
-     Each center draws its own family of circles (radius = base + i*spacing),
-     perturbed by a tiny Perlin wobble (a few px) so it still reads as a real
-     hand-drawn ring rather than a perfect CAD circle. Non-crossing between
-     the two centers is guaranteed by a single "ownership" test — a point
-     belongs to whichever center is nearer (with a small shared noise term so
-     the boundary itself curves organically instead of being a straight
-     bisector). Center B's rings use the exact logical complement of center
-     A's test, so the handoff has zero gap and zero overlap by construction:
-     nothing needs to be clipped after the fact.
+     Radius is capped strictly below the distance from the center to the
+     forbidden reading-zone corner (0.5w, 0.3h). Since that corner is the
+     nearest point of the whole forbidden quadrant (x<0.5w AND y>0.3h) to a
+     center positioned up and to the right of it, capping radius < that
+     distance makes it geometrically impossible for any ring to enter the
+     zone — no rectangular clipping needed, so the outer boundary stays a
+     pure noisy circle (organic S-curve), never a hard straight cut.
      ============================================================ */
-  const RING_COUNT = 22;        /* 15-25 per center */
-  const BASE_RADIUS = 14;       /* px, first ring radius */
-  const SPACING_MIN = 12, SPACING_MAX = 18; /* px between consecutive rings */
-  const NOISE_AMP_PX = 4;       /* +-3~5px: tiny wobble, never breaks the circle */
-  const NOISE_ANG_FREQ = 2.2;   /* how many wobbles per full revolution */
-  const BOUNDARY_NOISE_AMP = 22;
-  const BOUNDARY_NOISE_FREQ = 0.0035;
+  const RING_COUNT = 26;              /* 20-30 */
+  const BASE_RADIUS = 10;
+  const NOISE_AMP_PX = 4.5;           /* small hand-drawn wobble only */
+  const NOISE_ANG_FREQ = 2.4;
+  const SAFETY_MARGIN = 46;           /* px clearance kept from the forbidden corner */
   const MOBILE_BP = 768;
-  const ARC_STEPS = 260;
+  const ARC_STEPS = 280;
+  const RING_COLOR = '74,93,78';      /* #4A5D4E, moss/olive green */
 
   let w = 0, h = 0;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1152,18 +1149,38 @@ revealEls.forEach(el=> io.observe(el));
   let polylines = []; /* built once per layout: [{pts, cumLen, totalLen, width}] */
   const INITIAL_REVEAL = 0.6;
 
-  function ownedByA(x, y, cxA, cyA, cxB, cyB){
-    const nb = perlin2(x*BOUNDARY_NOISE_FREQ, y*BOUNDARY_NOISE_FREQ) * BOUNDARY_NOISE_AMP;
-    return (Math.hypot(x-cxA, y-cyA) + nb) < Math.hypot(x-cxB, y-cyB);
+  /* spacing trends from tight (8-12px) near the pith to looser (15-20px)
+     further out, with an occasional extra-tight squeeze for organic
+     irregularity, matching real annual tree-ring growth variation */
+  function ringSpacing(i, total, seedBase){
+    const t = i/total;
+    const minS = 8 + t*7, maxS = 12 + t*8;
+    let s = minS + hash(seedBase + i*7 + 3) * (maxS-minS);
+    if(hash(seedBase + i*5 + 41) < 0.15) s *= 0.55;
+    return s;
   }
 
-  function buildRingFamily(cx, cy, otherCx, otherCy, isCenterA, leftBoundary, canvasW, canvasH, seedBase){
-    const lines = [];
+  function buildPolylines(){
+    polylines = [];
+    if(w < 10 || h < 10) return;
+    const isMobile = w <= MOBILE_BP;
+
+    const cx = isMobile ? w*0.86 : w*0.87;
+    const cy = isMobile ? -h*0.03 : -h*0.02;
+
+    const cornerX = w*0.5, cornerY = h*0.3;
+    const cornerDist = Math.hypot(cx-cornerX, cy-cornerY);
+    const maxRadius = Math.max(BASE_RADIUS+40, cornerDist - SAFETY_MARGIN);
+
+    const seedBase = 31;
     let radius = BASE_RADIUS;
     for(let i=0;i<RING_COUNT;i++){
-      radius += SPACING_MIN + hash(seedBase + i*7 + 3) * (SPACING_MAX-SPACING_MIN);
+      radius += ringSpacing(i, RING_COUNT, seedBase);
+      if(radius > maxRadius) break;
+
       const seedX = hash(seedBase + i*11 + 2) * 1000;
       const seedY = hash(seedBase + i*17 + 5) * 1000;
+      const isOutermost = (radius + ringSpacing(i+1, RING_COUNT, seedBase)) > maxRadius;
 
       let current = [];
       const segs = [];
@@ -1173,9 +1190,8 @@ revealEls.forEach(el=> io.observe(el));
         const r = radius + n;
         const x = cx + Math.cos(a)*r;
         const y = cy + Math.sin(a)*r;
-        const inBounds = x >= leftBoundary && x <= canvasW && y >= 0 && y <= canvasH;
-        const owned = isCenterA ? ownedByA(x,y,cx,cy,otherCx,otherCy) : !ownedByA(x,y,otherCx,otherCy,cx,cy);
-        if(inBounds && owned){ current.push({x,y}); }
+        const inBounds = x >= 0 && x <= w && y >= 0 && y <= h;
+        if(inBounds){ current.push({x,y}); }
         else { if(current.length>1) segs.push(current); current=[]; }
       }
       if(current.length>1) segs.push(current);
@@ -1185,28 +1201,10 @@ revealEls.forEach(el=> io.observe(el));
         for(let p=1;p<seg.length;p++){ totalLen += Math.hypot(seg[p].x-seg[p-1].x, seg[p].y-seg[p-1].y); cumLen.push(totalLen); }
         if(totalLen < 10) return;
         const hw = hash(seedBase + i*23 + 9);
-        lines.push({ pts: seg, cumLen, totalLen, width: hw<0.2 ? 2.2 : (hw<0.55 ? 1.3 : 0.65) });
+        const width = isOutermost ? 3 : (hw<0.3 ? 2.3 : (hw<0.65 ? 1.9 : 1.5));
+        polylines.push({ pts: seg, cumLen, totalLen, width });
       });
     }
-    return lines;
-  }
-
-  function buildPolylines(){
-    polylines = [];
-    if(w < 10 || h < 10) return;
-    const isMobile = w <= MOBILE_BP;
-
-    const cxA = isMobile ? w*0.90 : w*1.00;
-    const cyA = isMobile ? 100    : h*0.50;
-    const cxB = isMobile ? w*0.50 : w*0.85;
-    const cyB = isMobile ? -50    : 0;
-
-    /* left 45% is a hard exclusion zone on desktop; mobile relies on the CSS fade instead */
-    const leftBoundary = isMobile ? 0 : w*0.45;
-
-    const familyA = buildRingFamily(cxA, cyA, cxB, cyB, true,  leftBoundary, w, h, 11);
-    const familyB = buildRingFamily(cxB, cyB, cxA, cyA, false, leftBoundary, w, h, 97);
-    polylines = familyA.concat(familyB);
   }
 
   function resize(){
@@ -1249,12 +1247,12 @@ revealEls.forEach(el=> io.observe(el));
   function render(){
     if(!w || !h) return;
     ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle = 'rgba(140,122,107,0.26)';
     const n = polylines.length;
     if(!n) return;
     polylines.forEach((line,i)=>{
       const cascade = Math.min(1, Math.max(0, progress*n - i));
       const reveal = INITIAL_REVEAL + (1-INITIAL_REVEAL) * cascade;
+      ctx.strokeStyle = `rgba(${RING_COLOR},${line.width>=3 ? 0.62 : 0.46})`;
       drawPolyline(line, reveal);
     });
   }
