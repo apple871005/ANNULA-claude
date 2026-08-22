@@ -1115,30 +1115,182 @@ revealEls.forEach(el=> io.observe(el));
     const ba=PERLIN_PERM[PERLIN_PERM[X+1]+Y], bb=PERLIN_PERM[PERLIN_PERM[X+1]+Y+1];
     return lerp(lerp(grad(aa,x,y),grad(ba,x-1,y),u), lerp(grad(ab,x,y-1),grad(bb,x-1,y-1),u), v) / 0.7;
   }
-  /* sample noise around a circle in noise-space so it wraps seamlessly at angle 0/2pi */
-  function angularNoise(angle, freq, seedX, seedY){
-    return perlin2(Math.cos(angle)*freq + seedX, Math.sin(angle)*freq + seedY);
-  }
 
-  const RING_COUNT = 22;
-  const NOISE_FREQ = 0.85; /* low frequency = broad, smooth, rounded waves */
-  let acc = 0.05;
-  const rings = Array.from({length: RING_COUNT}, (_, i) => {
-    const h1 = hash(i*2+1), h2 = hash(i*2+2), h4 = hash(i*5+9);
-    const radiusFrac = acc;
-    acc += 0.024 + hash(i*7+3) * 0.038; /* uneven spacing between consecutive lines */
-    const ring = {
-      radiusFrac,
-      seedDrift: i * 0.05, /* tiny per-ring drift so lines aren't identical copies, while staying correlated */
-      amp: 0.10 + h4*0.09,
-      width: h2 < 0.22 ? 2.2 : (h2 < 0.55 ? 1.3 : 0.6)
-    };
-    return ring;
-  });
+  /* ============================================================
+     DUAL-CENTER SCALAR FIELD + MARCHING SQUARES
+     Contours are iso-lines of ONE continuous field built from two
+     centers via min(distA, distB). Iso-lines of a scalar field at
+     different levels can never cross each other by construction —
+     this is what guarantees the two centers' line families repel /
+     merge cleanly instead of overlapping, without any special-case
+     collision logic.
+     ============================================================ */
+  const THRESHOLD_LEVELS = 32;
+  const NOISE_FREQ = 0.006;   /* low frequency -> broad, smooth, rounded distortion */
+  const NOISE_AMP_FRAC = 0.09; /* wobble amplitude as a fraction of local radius scale */
+  const CELL_SIZE = 6;         /* marching-squares sampling grid, px */
 
   let w = 0, h = 0;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  let progress = 0, targetProgress = 0, wobbleT = 0, rafRunning = false;
+  let progress = 0, targetProgress = 0, rafRunning = false;
+  let polylines = []; /* computed once per layout: [{pts:[{x,y},...], cumLen:[...], totalLen, width}] */
+  const INITIAL_REVEAL = 0.26; /* lines are already partly drawn before any scrolling */
+
+  function fieldAt(x, y, cx1, cy1, cx2, cy2, noiseScale){
+    const n = perlin2(x*NOISE_FREQ, y*NOISE_FREQ) * noiseScale;
+    const dA = Math.hypot(x-cx1, (y-cy1)/0.86) + n;
+    const dB = Math.hypot(x-cx2, (y-cy2)/0.86) + n;
+    return Math.min(dA, dB);
+  }
+
+  function buildPolylines(){
+    polylines = [];
+    if(w < 10 || h < 10) return;
+
+    const cxA = w * 1.02, cyA = h * 0.55;      /* center A: right edge */
+    const cxB = w * 0.70, cyB = -h * 0.06;     /* center B: top-right edge */
+    const noiseScale = Math.max(w,h) * NOISE_AMP_FRAC;
+
+    const nx = Math.max(4, Math.round(w / CELL_SIZE));
+    const ny = Math.max(4, Math.round(h / CELL_SIZE));
+    const gx = i => (i/nx) * w;
+    const gy = j => (j/ny) * h;
+
+    const field = new Float32Array((nx+1)*(ny+1));
+    for(let j=0;j<=ny;j++){
+      for(let i=0;i<=nx;i++){
+        field[j*(nx+1)+i] = fieldAt(gx(i), gy(j), cxA, cyA, cxB, cyB, noiseScale);
+      }
+    }
+
+    /* keep the left side clean: cap the max contour level well before it reaches there */
+    const maxLevel = Math.max(w,h) * 0.72;
+    const minLevel = maxLevel * 0.035;
+    let acc = minLevel;
+    const levels = [];
+    for(let k=0;k<THRESHOLD_LEVELS;k++){
+      levels.push(acc);
+      acc += ((maxLevel-minLevel)/THRESHOLD_LEVELS) * (0.55 + hash(k*7+3)*0.9); /* irregular spacing */
+    }
+
+    let lineIndex = 0;
+    levels.forEach((threshold, levelIdx)=>{
+      const segments = marchingSquares(field, nx, ny, gx, gy, threshold);
+      const chains = stitchSegments(segments);
+      chains.forEach(chain=>{
+        if(chain.length < 2) return;
+        let totalLen = 0;
+        const cumLen = [0];
+        for(let p=1;p<chain.length;p++){
+          totalLen += Math.hypot(chain[p].x-chain[p-1].x, chain[p].y-chain[p-1].y);
+          cumLen.push(totalLen);
+        }
+        if(totalLen < 12) return; /* discard tiny noise fragments */
+        const hw = hash(lineIndex*11+2);
+        polylines.push({
+          pts: chain, cumLen, totalLen,
+          width: hw < 0.2 ? 2.2 : (hw < 0.55 ? 1.3 : 0.65)
+        });
+        lineIndex++;
+      });
+    });
+  }
+
+  function marchingSquares(field, nx, ny, gx, gy, threshold){
+    /* flat-array edge caches (indexed directly, not string-keyed Maps) — this is the
+       hot path (~30 threshold levels x tens of thousands of cells), so avoiding
+       Map<string> key hashing here matters a lot for init time */
+    const hEdge = new Array(nx*(ny+1));
+    const vEdge = new Array((nx+1)*ny);
+    function getH(i,j){
+      const idx = i + j*nx;
+      const cached = hEdge[idx];
+      if(cached !== undefined) return cached;
+      const v1=field[j*(nx+1)+i], v2=field[j*(nx+1)+i+1];
+      let pt=null;
+      if((v1>threshold)!==(v2>threshold)){
+        const t=(threshold-v1)/(v2-v1);
+        pt={x: gx(i)+t*(gx(i+1)-gx(i)), y: gy(j)};
+      }
+      hEdge[idx]=pt; return pt;
+    }
+    function getV(i,j){
+      const idx = i + j*(nx+1);
+      const cached = vEdge[idx];
+      if(cached !== undefined) return cached;
+      const v1=field[j*(nx+1)+i], v2=field[(j+1)*(nx+1)+i];
+      let pt=null;
+      if((v1>threshold)!==(v2>threshold)){
+        const t=(threshold-v1)/(v2-v1);
+        pt={x: gx(i), y: gy(j)+t*(gy(j+1)-gy(j))};
+      }
+      vEdge[idx]=pt; return pt;
+    }
+    const segments = [];
+    for(let j=0;j<ny;j++){
+      for(let i=0;i<nx;i++){
+        const vtl=field[j*(nx+1)+i], vtr=field[j*(nx+1)+i+1];
+        const vbl=field[(j+1)*(nx+1)+i], vbr=field[(j+1)*(nx+1)+i+1];
+        const N=getH(i,j), S=getH(i,j+1), W=getV(i,j), E=getV(i+1,j);
+        let count=0, p0=null, p1=null;
+        if(N){ p0=N; count++; }
+        if(E){ if(count===0)p0=E; else p1=E; count++; }
+        if(S){ if(count===0)p0=S; else if(count===1)p1=S; count++; }
+        if(W){ if(count===0)p0=W; else if(count===1)p1=W; count++; }
+        const pts = count===2 ? [p0,p1] : (count===4 ? [N,E,S,W] : null);
+        if(pts && pts.length===2){ segments.push([pts[0],pts[1]]); }
+        else if(pts && pts.length===4){
+          const center=(vtl+vtr+vbl+vbr)/4;
+          if(center>threshold){ segments.push([N,W]); segments.push([S,E]); }
+          else { segments.push([N,E]); segments.push([S,W]); }
+        }
+      }
+    }
+    return segments;
+  }
+
+  function stitchSegments(segments){
+    const used = new Array(segments.length).fill(false);
+    const pointMap = new Map(); /* point object identity -> [{idx,e}] */
+    segments.forEach((seg,idx)=>{
+      [0,1].forEach(e=>{
+        if(!pointMap.has(seg[e])) pointMap.set(seg[e], []);
+        pointMap.get(seg[e]).push({idx,e});
+      });
+    });
+    const chains = [];
+    for(let s=0;s<segments.length;s++){
+      if(used[s]) continue;
+      used[s]=true;
+      const chain=[segments[s][0], segments[s][1]];
+      let extended=true;
+      while(extended){
+        extended=false;
+        const candidates = pointMap.get(chain[chain.length-1]) || [];
+        for(const c of candidates){
+          if(!used[c.idx]){
+            const seg=segments[c.idx];
+            chain.push(c.e===0 ? seg[1] : seg[0]);
+            used[c.idx]=true; extended=true; break;
+          }
+        }
+      }
+      extended=true;
+      while(extended){
+        extended=false;
+        const candidates = pointMap.get(chain[0]) || [];
+        for(const c of candidates){
+          if(!used[c.idx]){
+            const seg=segments[c.idx];
+            chain.unshift(c.e===0 ? seg[1] : seg[0]);
+            used[c.idx]=true; extended=true; break;
+          }
+        }
+      }
+      chains.push(chain);
+    }
+    return chains;
+  }
 
   function resize(){
     w = section.clientWidth; h = section.clientHeight;
@@ -1147,6 +1299,7 @@ revealEls.forEach(el=> io.observe(el));
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildPolylines(); /* paths are fixed at layout time; never recomputed during scroll */
   }
 
   function computeTargetProgress(){
@@ -1156,41 +1309,45 @@ revealEls.forEach(el=> io.observe(el));
     targetProgress = Math.min(1, Math.max(0, p));
   }
 
-  function drawRing(ring, cx, cy, maxR, reveal, wobble){
+  function drawPolyline(line, reveal){
     if(reveal <= 0) return;
-    const steps = 200;
-    const endAngle = Math.PI * 2 * reveal;
+    const targetLen = line.totalLen * reveal;
     ctx.beginPath();
-    for(let s=0; s<=steps; s++){
-      const a = (s/steps) * endAngle;
-      if(a > endAngle) break;
-      /* shared low-frequency noise field, sampled on a circle so it loops seamlessly;
-         a tiny per-ring seed drift + slow time-based wobble keep rings correlated but not identical */
-      const n = angularNoise(a, NOISE_FREQ, ring.seedDrift + wobble, ring.seedDrift*1.7 - wobble*0.6);
-      const r = ring.radiusFrac * maxR * (1 + n * ring.amp);
-      const x = cx + Math.cos(a) * r;
-      const y = cy + Math.sin(a) * r * 0.86;
-      if(s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    ctx.moveTo(line.pts[0].x, line.pts[0].y);
+    for(let p=1;p<line.pts.length;p++){
+      if(line.cumLen[p] <= targetLen){
+        ctx.lineTo(line.pts[p].x, line.pts[p].y);
+      } else {
+        const segLen = line.cumLen[p]-line.cumLen[p-1];
+        const t = segLen>0 ? (targetLen-line.cumLen[p-1])/segLen : 0;
+        const prev=line.pts[p-1], cur=line.pts[p];
+        ctx.lineTo(prev.x+(cur.x-prev.x)*t, prev.y+(cur.y-prev.y)*t);
+        break;
+      }
     }
-    ctx.lineWidth = ring.width;
+    ctx.lineWidth = line.width;
     ctx.stroke();
   }
 
   function render(){
     if(!w || !h) return;
     ctx.clearRect(0,0,w,h);
-    const cx = w*0.88, cy = h*0.48;
-    const maxR = Math.max(w,h) * 0.58;
     ctx.strokeStyle = 'rgba(140,122,107,0.24)';
-    rings.forEach((ring,i)=>{
-      const localReveal = Math.min(1, Math.max(0, progress*RING_COUNT - i));
-      drawRing(ring, cx, cy, maxR, localReveal, wobbleT);
+    const n = polylines.length;
+    if(!n) return;
+    /* only the revealed LENGTH responds to scroll; point coordinates never change.
+       cascade(i) goes 0->1 as progress goes 0->1, staggered per line so lines extend
+       in sequence; mapped into [INITIAL_REVEAL, 1] so every line already shows its
+       initial stub at progress=0 and scrolling back up retracts to that stub, never to nothing. */
+    polylines.forEach((line,i)=>{
+      const cascade = Math.min(1, Math.max(0, progress*n - i));
+      const reveal = INITIAL_REVEAL + (1-INITIAL_REVEAL) * cascade;
+      drawPolyline(line, reveal);
     });
   }
 
-  function loop(now){
+  function loop(){
     progress += (targetProgress - progress) * 0.08;
-    wobbleT = now * 0.0004;
     render();
     const settled = Math.abs(targetProgress - progress) < 0.0008;
     if(!settled){ requestAnimationFrame(loop); } else { rafRunning = false; }
@@ -1202,7 +1359,11 @@ revealEls.forEach(el=> io.observe(el));
   } else {
     window.addEventListener('scroll', ()=>{ computeTargetProgress(); ensureLoop(); }, {passive:true});
   }
-  window.addEventListener('resize', ()=>{ resize(); computeTargetProgress(); if(reduceMotion) progress = targetProgress; render(); });
+  let resizeTimer = null;
+  window.addEventListener('resize', ()=>{
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(()=>{ resize(); computeTargetProgress(); if(reduceMotion) progress = targetProgress; render(); }, 150);
+  });
 
   resize();
   computeTargetProgress();
