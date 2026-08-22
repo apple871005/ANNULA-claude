@@ -364,8 +364,14 @@ ul{list-style:none;}
 .guarantee-strip strong{color:var(--ink);}
 
 /* ===================== CARE SERVICE ===================== */
-#care .care-wrap{display:grid;grid-template-columns:1fr 1.1fr;gap:60px;align-items:center;}
-@media (max-width:900px){#care .care-wrap{grid-template-columns:1fr;gap:36px;}}
+#care .care-wrap{display:grid;grid-template-columns:1fr 1.1fr;grid-template-rows:auto 1fr;grid-template-areas:"img eyebrow" "img body";column-gap:60px;row-gap:0;align-items:center;}
+.care-eyebrow{grid-area:eyebrow;margin:0;align-self:end;}
+.care-img{grid-area:img;}
+.care-body{grid-area:body;align-self:start;}
+@media (max-width:900px){#care .care-wrap{grid-template-columns:1fr;grid-template-rows:auto;grid-template-areas:"eyebrow" "img" "body";row-gap:36px;column-gap:0;}
+  .care-eyebrow{align-self:auto;}
+  .care-body{align-self:auto;}
+}
 #care .care-img{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/5;box-shadow:var(--shadow-soft);}
 #care .care-img img{width:100%;height:100%;object-fit:cover;}
 #care h2{font-size:clamp(24px,3.2vw,34px);font-weight:700;margin:16px 0 18px;}
@@ -384,6 +390,7 @@ ul{list-style:none;}
 .about-wrap h2{margin:16px 0 22px;line-height:1.4;}
 .about-title{font-family:'Italiana',serif;font-weight:400;font-style:normal;font-size:clamp(24px,3vw,36px);letter-spacing:.02em;}
 .about-wrap p.story{color:var(--ink-soft);font-size:17px;margin-bottom:16px;line-height:1.9;}
+.about-wrap p.story + p.story{margin-top:32px;}
 .about-img{border-radius:var(--r-lg);overflow:hidden;aspect-ratio:4/5;box-shadow:var(--shadow-soft);}
 .about-img img{width:100%;height:100%;object-fit:cover;}
 @media (max-width:900px){.about-img{aspect-ratio:16/10;}}
@@ -735,9 +742,9 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 <section id="care" class="section">
   <div class="container">
     <div class="care-wrap">
+      <p class="eyebrow care-eyebrow reveal">PLANT CARE SERVICE ·<br class="mobile-break"> 綠植到府整理</p>
       <div class="care-img reveal"><img src="photo/plantcare.JPG" alt="專員配戴手套於戶外街邊，使用澆水袋為盆栽植物澆水養護"></div>
-      <div class="reveal">
-        <p class="eyebrow">PLANT CARE SERVICE · 綠植到府整理</p>
+      <div class="reveal care-body">
         <h2>換土換盆、<br class="mobile-break">病蟲害處置與修剪</h2>
         <p class="desc">讓專業的人，做懂植物的事。我們的養護專員會依植物狀態調整照護方式，並留下健康巡檢報告。</p>
         <ul class="check-list">
