@@ -1094,20 +1094,46 @@ revealEls.forEach(el=> io.observe(el));
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function hash(n){ const x = Math.sin(n*127.1)*43758.5453; return x - Math.floor(x); }
-  const RING_COUNT = 24;
+
+  /* ---- classic 2D Perlin noise (deterministic permutation) ---- */
+  const PERLIN_PERM = (function(){
+    const p = new Uint8Array(256);
+    for(let i=0;i<256;i++) p[i]=i;
+    for(let i=255;i>0;i--){ const j = Math.floor(hash(i*13.37+7)*(i+1)); const t=p[i]; p[i]=p[j]; p[j]=t; }
+    const perm = new Uint8Array(512);
+    for(let i=0;i<512;i++) perm[i]=p[i&255];
+    return perm;
+  })();
+  function fade(t){ return t*t*t*(t*(t*6-15)+10); }
+  function lerp(a,b,t){ return a+t*(b-a); }
+  function grad(hv,x,y){ const h=hv&3, u=h<2?x:y, v=h<2?y:x; return ((h&1)?-u:u)+((h&2)?-2*v:2*v); }
+  function perlin2(x,y){
+    const X=Math.floor(x)&255, Y=Math.floor(y)&255;
+    x-=Math.floor(x); y-=Math.floor(y);
+    const u=fade(x), v=fade(y);
+    const aa=PERLIN_PERM[PERLIN_PERM[X]+Y], ab=PERLIN_PERM[PERLIN_PERM[X]+Y+1];
+    const ba=PERLIN_PERM[PERLIN_PERM[X+1]+Y], bb=PERLIN_PERM[PERLIN_PERM[X+1]+Y+1];
+    return lerp(lerp(grad(aa,x,y),grad(ba,x-1,y),u), lerp(grad(ab,x,y-1),grad(bb,x-1,y-1),u), v) / 0.7;
+  }
+  /* sample noise around a circle in noise-space so it wraps seamlessly at angle 0/2pi */
+  function angularNoise(angle, freq, seedX, seedY){
+    return perlin2(Math.cos(angle)*freq + seedX, Math.sin(angle)*freq + seedY);
+  }
+
+  const RING_COUNT = 22;
+  const NOISE_FREQ = 0.85; /* low frequency = broad, smooth, rounded waves */
+  let acc = 0.05;
   const rings = Array.from({length: RING_COUNT}, (_, i) => {
-    const h1 = hash(i*2+1), h2 = hash(i*2+2), h3 = hash(i*3+5), h4 = hash(i*5+9);
-    return {
-      radiusFrac: 0.05 + i * 0.04,
-      freq1: 3 + Math.floor(h1*5),
-      freq2: 6 + Math.floor(h2*5),
-      freq3: 10 + Math.floor(h3*5),
-      phase1: h1 * Math.PI*2,
-      phase2: h2 * Math.PI*2,
-      phase3: h3 * Math.PI*2,
-      amp: 0.028 + h4*0.05,
+    const h1 = hash(i*2+1), h2 = hash(i*2+2), h4 = hash(i*5+9);
+    const radiusFrac = acc;
+    acc += 0.024 + hash(i*7+3) * 0.038; /* uneven spacing between consecutive lines */
+    const ring = {
+      radiusFrac,
+      seedDrift: i * 0.05, /* tiny per-ring drift so lines aren't identical copies, while staying correlated */
+      amp: 0.10 + h4*0.09,
       width: h2 < 0.22 ? 2.2 : (h2 < 0.55 ? 1.3 : 0.6)
     };
+    return ring;
   });
 
   let w = 0, h = 0;
@@ -1132,17 +1158,16 @@ revealEls.forEach(el=> io.observe(el));
 
   function drawRing(ring, cx, cy, maxR, reveal, wobble){
     if(reveal <= 0) return;
-    const steps = 160;
+    const steps = 200;
     const endAngle = Math.PI * 2 * reveal;
     ctx.beginPath();
     for(let s=0; s<=steps; s++){
       const a = (s/steps) * endAngle;
       if(a > endAngle) break;
-      const noise = 1
-        + ring.amp * Math.sin(ring.freq1*a + ring.phase1 + wobble)
-        + ring.amp * 0.6 * Math.sin(ring.freq2*a + ring.phase2 - wobble*1.3)
-        + ring.amp * 0.35 * Math.sin(ring.freq3*a + ring.phase3 + wobble*0.7);
-      const r = ring.radiusFrac * maxR * noise;
+      /* shared low-frequency noise field, sampled on a circle so it loops seamlessly;
+         a tiny per-ring seed drift + slow time-based wobble keep rings correlated but not identical */
+      const n = angularNoise(a, NOISE_FREQ, ring.seedDrift + wobble, ring.seedDrift*1.7 - wobble*0.6);
+      const r = ring.radiusFrac * maxR * (1 + n * ring.amp);
       const x = cx + Math.cos(a) * r;
       const y = cy + Math.sin(a) * r * 0.86;
       if(s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
