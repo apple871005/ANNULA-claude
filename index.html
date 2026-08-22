@@ -385,6 +385,13 @@ ul{list-style:none;}
 /* ===================== ABOUT ===================== */
 #about{background:var(--bg-card);border-radius:56px;margin:0 16px;overflow:hidden;}
 @media (max-width:640px){ #about{border-radius:32px;margin:0 8px;} }
+@media (max-width:768px){
+  #about{padding-top:200px;}
+  .about-rings{
+    -webkit-mask-image:linear-gradient(to bottom, black 0%, black 38%, transparent 82%);
+    mask-image:linear-gradient(to bottom, black 0%, black 38%, transparent 82%);
+  }
+}
 #about .container{position:relative;z-index:1;}
 .about-rings{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block;}
 .about-wrap{max-width:600px;margin:0;}
@@ -1125,16 +1132,17 @@ revealEls.forEach(el=> io.observe(el));
      merge cleanly instead of overlapping, without any special-case
      collision logic.
      ============================================================ */
-  const THRESHOLD_LEVELS = 32;
+  const THRESHOLD_LEVELS = 14;  /* fewer, sparser lines (~30% area coverage, not filled) */
   const NOISE_FREQ = 0.006;   /* low frequency -> broad, smooth, rounded distortion */
   const NOISE_AMP_FRAC = 0.09; /* wobble amplitude as a fraction of local radius scale */
   const CELL_SIZE = 6;         /* marching-squares sampling grid, px */
+  const MOBILE_BP = 768;
 
   let w = 0, h = 0;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   let progress = 0, targetProgress = 0, rafRunning = false;
   let polylines = []; /* computed once per layout: [{pts:[{x,y},...], cumLen:[...], totalLen, width}] */
-  const INITIAL_REVEAL = 0.26; /* lines are already partly drawn before any scrolling */
+  const INITIAL_REVEAL = 0.6; /* already 60% drawn before any scrolling */
 
   function fieldAt(x, y, cx1, cy1, cx2, cy2, noiseScale){
     const n = perlin2(x*NOISE_FREQ, y*NOISE_FREQ) * noiseScale;
@@ -1147,13 +1155,25 @@ revealEls.forEach(el=> io.observe(el));
     polylines = [];
     if(w < 10 || h < 10) return;
 
-    const cxA = w * 1.02, cyA = h * 0.55;      /* center A: right edge */
-    const cxB = w * 0.70, cyB = -h * 0.06;     /* center B: top-right edge */
+    const isMobile = w <= MOBILE_BP;
+    /* desktop: A at right edge, B at top-right edge, both requirements kept exactly.
+       mobile: pull both up toward the top so the pattern clusters at top/top-right,
+       matching the "concentrated at top" mobile requirement (the CSS mask handles the
+       fade toward the lower, text-bearing area). */
+    const cxA = isMobile ? w * 1.05 : w * 1.02;
+    const cyA = isMobile ? h * 0.20 : h * 0.55;
+    const cxB = isMobile ? w * 0.60 : w * 0.70;
+    const cyB = isMobile ? -h * 0.04 : -h * 0.06;
     const noiseScale = Math.max(w,h) * NOISE_AMP_FRAC;
 
-    const nx = Math.max(4, Math.round(w / CELL_SIZE));
+    /* desktop: hard-restrict the sampling grid itself so no contour geometry can ever
+       exist left of 45% width — this guarantees the clean zone structurally rather
+       than by clipping after the fact. mobile relies on the opacity fade instead. */
+    const leftBoundary = isMobile ? 0 : w * 0.45;
+
+    const nx = Math.max(4, Math.round((w-leftBoundary) / CELL_SIZE));
     const ny = Math.max(4, Math.round(h / CELL_SIZE));
-    const gx = i => (i/nx) * w;
+    const gx = i => leftBoundary + (i/nx) * (w-leftBoundary);
     const gy = j => (j/ny) * h;
 
     const field = new Float32Array((nx+1)*(ny+1));
@@ -1163,22 +1183,30 @@ revealEls.forEach(el=> io.observe(el));
       }
     }
 
-    /* keep the left side clean: cap the max contour level well before it reaches there */
-    const maxLevel = Math.max(w,h) * 0.72;
-    const minLevel = maxLevel * 0.035;
+    /* sparse coverage: fewer levels, capped well short of the far edge so the pattern
+       occupies roughly the near third of its own (already-restricted) domain */
+    const maxLevel = Math.max(w,h) * 0.5;
+    const minLevel = maxLevel * 0.08;
     let acc = minLevel;
     const levels = [];
     for(let k=0;k<THRESHOLD_LEVELS;k++){
       levels.push(acc);
-      acc += ((maxLevel-minLevel)/THRESHOLD_LEVELS) * (0.55 + hash(k*7+3)*0.9); /* irregular spacing */
+      acc += ((maxLevel-minLevel)/THRESHOLD_LEVELS) * (0.6 + hash(k*7+3)*1.1); /* irregular spacing */
     }
 
     let lineIndex = 0;
-    levels.forEach((threshold, levelIdx)=>{
+    levels.forEach((threshold)=>{
       const segments = marchingSquares(field, nx, ny, gx, gy, threshold);
       const chains = stitchSegments(segments);
       chains.forEach(chain=>{
         if(chain.length < 2) return;
+        /* discard closed loops entirely — an isolated ring around a single peak is
+           exactly the "small isolated circle" the design must never show. Only chains
+           that run from one sampled-domain edge to another (open paths) survive, which
+           is what gives the "flows in from the edge, flows out the edge" look. */
+        const first = chain[0], last = chain[chain.length-1];
+        const isClosed = Math.abs(first.x-last.x) < 0.01 && Math.abs(first.y-last.y) < 0.01;
+        if(isClosed) return;
         let totalLen = 0;
         const cumLen = [0];
         for(let p=1;p<chain.length;p++){
