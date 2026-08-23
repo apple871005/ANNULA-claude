@@ -209,6 +209,7 @@ ul{list-style:none;}
 .section-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:700;margin:16px 0 18px;letter-spacing:.01em;}
 .section-head p{color:var(--ink-soft);font-size:15.5px;max-width:46ch;margin:0 auto;}
 #products .section-head p{font-size:17px;}
+#rental .section-head p{font-size:17px;}
 .section-head.left{margin:0 0 56px;text-align:left;}
 .section-head.left p{margin:0;}
 .featured-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;letter-spacing:.01em;}
@@ -266,7 +267,7 @@ ul{list-style:none;}
   .flow-step{display:flex;align-items:center;gap:16px;text-align:left;}
   .flow-step .fs-icon{margin:0;flex-shrink:0;}
 }
-.rental-note{font-size:13.5px;color:var(--ink-soft);text-align:center;margin-bottom:18px;}
+.rental-note{font-size:15.5px;color:var(--ink-soft);text-align:center;margin-bottom:18px;}
 .rental-cta-row{text-align:center;}
 
 .pkg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
@@ -276,14 +277,14 @@ ul{list-style:none;}
 .pkg-card.feat{border-color:var(--accent);}
 .pkg-badge{align-self:flex-start;font-size:11px;letter-spacing:.1em;background:var(--accent);color:#fff;padding:4px 12px;border-radius:var(--r-full);margin-bottom:18px;font-weight:600;}
 .pkg-card h4{font-size:19px;font-weight:700;margin-bottom:6px;}
-.pkg-card .pkg-desc{font-size:13.5px;color:var(--ink-soft);margin-bottom:22px;min-height:44px;}
+.pkg-card .pkg-desc{font-size:15.5px;color:var(--ink-soft);margin-bottom:22px;min-height:44px;}
 .pkg-card .pkg-price{font-family:'Cormorant Garamond','Noto Sans TC',serif;font-size:32px;font-weight:600;margin-bottom:4px;color:var(--ink);}
 .pkg-card .pkg-price span{font-size:13px;font-family:'Noto Sans TC';color:var(--ink-soft);font-weight:400;}
 .pkg-card ul{margin:18px 0 26px;flex:1;}
 .pkg-card li{font-size:13.5px;color:var(--ink-soft);display:flex;gap:8px;padding:5px 0;}
 .pkg-card li .icon{width:13px;height:13px;margin-top:4px;flex-shrink:0;color:var(--accent);}
 
-.light-desc{max-width:560px;margin:0 auto 40px;text-align:center;font-size:13.5px;line-height:1.5;color:var(--ink-soft);}
+.light-desc{max-width:600px;margin:0 auto 40px;text-align:center;font-size:15.5px;line-height:1.5;color:var(--ink-soft);}
 .light-desc strong{display:block;text-align:center;font-family:'Italiana','Noto Sans TC',serif;font-style:normal;font-size:18px;color:var(--ink);margin-bottom:22px;font-weight:400;letter-spacing:.02em;}
 .light-desc .ld-line{display:block;text-align:left;margin-top:16px;padding-left:16px;border-left:2px solid var(--line);}
 .light-desc .ld-line:first-of-type{margin-top:0;}
@@ -317,9 +318,9 @@ ul{list-style:none;}
   .filter-btn{padding:9px 12px;font-size:11.5px;gap:4px;}
 }
 .filter-meta{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-bottom:44px;}
-.plant-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}
-@media (max-width:1020px){.plant-grid{grid-template-columns:repeat(2,1fr);}}
-@media (max-width:420px){.plant-grid{gap:14px;}}
+.plant-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
+@media (max-width:1020px){.plant-grid{grid-template-columns:repeat(2,1fr);gap:26px;}}
+@media (max-width:420px){.plant-grid{gap:18px;}}
 .plant-card{
   background:var(--bg-card);border:1px solid var(--line);border-radius:var(--r-md);
   padding:26px 22px;cursor:pointer;transition:transform .4s var(--ease), box-shadow .4s var(--ease);
@@ -346,10 +347,10 @@ ul{list-style:none;}
 .pc-icon-wrap .pc-img-detail{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s var(--ease);}
 .plant-card:hover .pc-img-detail{opacity:1;}
 .pc-tag{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--wood);display:flex;align-items:center;gap:5px;margin-bottom:8px;}
-.plant-card h4{font-size:16.5px;font-weight:700;}
-.plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:14.5px;margin-bottom:12px;display:block;}
-.pc-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;}
-.pc-meta .price{font-family:'Cormorant Garamond','Noto Sans TC',serif;font-weight:600;font-size:18.5px;color:var(--ink);}
+.plant-card h4{font-size:18px;font-weight:700;}
+.plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:15.5px;margin-bottom:12px;display:block;}
+.pc-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;}
+.pc-meta .price{font-family:'Cormorant Garamond','Noto Sans TC',serif;font-weight:600;font-size:20px;color:var(--ink);}
 @media (max-width:640px){
   #buildGrid .pc-meta{flex-direction:column;align-items:flex-start;gap:4px;line-height:1.3;}
   #buildGrid .pc-meta span{white-space:nowrap;}
@@ -416,7 +417,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 /* product modal */
 #productModal{
   position:fixed;z-index:121;top:50%;left:50%;
-  width:min(880px,92vw);max-height:88vh;overflow:auto;
+  width:min(1020px,94vw);max-height:90vh;overflow:auto;
   background:var(--bg);border-radius:var(--r-lg);
   transform:translate(-50%,-46%) scale(.94);opacity:0;visibility:hidden;pointer-events:none;
   transition:transform .45s var(--ease), opacity .4s var(--ease), visibility .4s;
@@ -442,13 +443,13 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .pm-nav-next{right:14px;}
 .pm-body{padding:50px 46px;}
 @media (max-width:680px){.pm-body{padding:34px 30px 40px;}}
-.pm-tag{font-size:12px;font-weight:600;color:var(--wood);letter-spacing:.06em;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
-.pm-body h3{font-size:25px;font-weight:700;margin-bottom:2px;}
-.pm-body .pm-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:16px;margin-bottom:20px;display:block;}
-.pm-price{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;margin-bottom:22px;}
+.pm-tag{font-size:13px;font-weight:600;color:var(--wood);letter-spacing:.06em;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.pm-body h3{font-size:29px;font-weight:700;margin-bottom:2px;}
+.pm-body .pm-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:18px;margin-bottom:20px;display:block;}
+.pm-price{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;margin-bottom:22px;}
 .pm-price span{font-size:12.5px;font-family:'Noto Sans TC';color:var(--ink-soft);font-weight:400;}
 .pm-care{margin-bottom:26px;}
-.pm-care li{display:flex;gap:10px;font-size:14px;color:var(--ink-soft);padding:8px 0;border-bottom:1px solid var(--line);}
+.pm-care li{display:flex;gap:10px;font-size:15.5px;color:var(--ink-soft);padding:9px 0;border-bottom:1px solid var(--line);}
 .pm-care li .icon{width:14px;height:14px;color:var(--accent);margin-top:3px;flex-shrink:0;}
 .pm-actions{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;}
 .qty-stepper{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:var(--r-full);padding:6px 8px;}
@@ -713,7 +714,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     </div>
 
     <div class="tab-panel active" data-panel="build">
-      <p style="text-align:center;font-size:13.5px;color:var(--ink-soft);max-width:520px;margin:0 auto 34px;">依空間光照條件，自由挑選適合的植栽。</p>
+      <p style="text-align:center;font-size:15.5px;color:var(--ink-soft);max-width:520px;margin:0 auto 34px;">依空間光照條件，自由挑選適合的植栽。</p>
       <div class="filter-row">
         <button class="filter-btn active" data-blight="sun">喜光耐曬型</button>
         <button class="filter-btn" data-blight="semi">明亮散光型</button>
@@ -1319,6 +1320,7 @@ function renderPmVisual(){
     : `<svg class="icon" viewBox="0 0 64 64"><use href="#${currentProduct.icon}"/></svg>`;
   pmVisual.className = 'pm-visual light-' + currentProduct.light + (current ? ' has-photo' : '') + (imgs.length>1 ? ' has-multi' : '');
   pmVisual.style.background = current ? '' : (currentProduct.light==='sun'?'#F3E7CF':currentProduct.light==='semi'?'#E7EBDD':'#DCE3D8');
+  if(current){ stripPhotoBackground(pmVisual.querySelector('img')); }
 }
 document.getElementById('pmVisual').addEventListener('click', (e)=>{
   if(e.target.closest('.pm-nav-prev')){ stepPmImage(-1); return; }
