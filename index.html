@@ -318,9 +318,9 @@ ul{list-style:none;}
   .filter-btn{padding:9px 12px;font-size:11.5px;gap:4px;}
 }
 .filter-meta{text-align:center;font-size:13.5px;color:var(--ink-soft);margin-bottom:44px;}
-.plant-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;}
-@media (max-width:1020px){.plant-grid{grid-template-columns:repeat(2,1fr);gap:26px;}}
-@media (max-width:420px){.plant-grid{gap:18px;}}
+.plant-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;}
+@media (max-width:1020px){.plant-grid{grid-template-columns:repeat(2,1fr);gap:24px;}}
+@media (max-width:420px){.plant-grid{gap:16px;}}
 .plant-card{
   background:var(--bg-card);border:1px solid var(--line);border-radius:var(--r-md);
   padding:26px 22px;cursor:pointer;transition:transform .4s var(--ease), box-shadow .4s var(--ease);
@@ -348,6 +348,7 @@ ul{list-style:none;}
 .plant-card:hover .pc-img-detail{opacity:1;}
 .pc-tag{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--wood);display:flex;align-items:center;gap:5px;margin-bottom:8px;}
 .plant-card h4{font-size:18px;font-weight:700;}
+@media (max-width:640px){ .plant-card h4{font-size:16.5px;} }
 .plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:15.5px;margin-bottom:12px;display:block;}
 .pc-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;}
 .pc-meta .price{font-family:'Cormorant Garamond','Noto Sans TC',serif;font-weight:600;font-size:20px;color:var(--ink);}
