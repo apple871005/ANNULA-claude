@@ -1334,7 +1334,7 @@ function renderPmVisual(){
     : `<svg class="icon" viewBox="0 0 64 64"><use href="#${currentProduct.icon}"/></svg>`;
   pmVisual.className = 'pm-visual light-' + currentProduct.light + (current ? ' has-photo' : '') + (imgs.length>1 ? ' has-multi' : '');
   pmVisual.style.background = current ? '' : (currentProduct.light==='sun'?'#F3E7CF':currentProduct.light==='semi'?'#E7EBDD':'#DCE3D8');
-  if(current){ stripPhotoBackground(pmVisual.querySelector('img')); }
+  if(current && pmImageIndex===0){ stripPhotoBackground(pmVisual.querySelector('img')); }
 }
 document.getElementById('pmVisual').addEventListener('click', (e)=>{
   if(e.target.closest('.pm-nav-prev')){ stepPmImage(-1); return; }
