@@ -379,8 +379,8 @@ ul{list-style:none;}
 #care h2{font-size:clamp(24px,3.2vw,34px);font-weight:700;margin:16px 0 18px;}
 #care p.desc{color:var(--ink-soft);font-size:17px;margin-bottom:28px;max-width:48ch;}
 .check-list{margin-bottom:30px;}
-.check-list li{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;}
-.check-list li .icon{width:16px;height:16px;color:var(--accent);flex-shrink:0;}
+.check-list li{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;line-height:1.6;}
+.check-list li .icon{width:16px;height:16px;color:var(--accent);flex-shrink:0;margin-top:3px;}
 .price-note{font-size:13.5px;color:var(--ink-soft);margin-top:22px;}
 .price-note strong{color:var(--ink);font-family:'Cormorant Garamond',serif;font-weight:600;font-size:17px;}
 
@@ -751,12 +751,13 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
       <div class="care-img reveal"><img src="photo/plantcare.JPG" alt="專員配戴手套於戶外街邊，使用澆水袋為盆栽植物澆水養護"></div>
       <div class="reveal care-body">
         <h2>換土換盆、<br class="mobile-break">病蟲害處置與修剪</h2>
-        <p class="desc">讓專業的人，做懂植物的事。我們的養護專員會依植物狀態調整照護方式，並留下健康巡檢報告。</p>
+        <p class="desc">專為居家與商業空間打造的定期園藝照護服務。由專業園藝師親自到府，提供全方位的植物健康檢查與維護，為您省去繁瑣整理，輕鬆維持清新美好的綠意空間。</p>
         <ul class="check-list">
-          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>換土換盆</li>
-          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>病蟲害處置</li>
-          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>修剪整姿</li>
-          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg>健康巡檢報告</li>
+          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg><span><strong>換土換盆</strong>：評估根系生長狀況，選用透氣與營養配比合宜的介質</span></li>
+          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg><span><strong>施肥</strong>：於生長旺季提供養分，讓植物根系強健並增強抗病力</span></li>
+          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg><span><strong>病蟲害處置</strong>：針對介殼蟲、紅蜘蛛等常見害蟲，進行物理及藥劑防護</span></li>
+          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg><span><strong>修剪整枝</strong>：梳理黃葉枯枝，維持美觀與良好通風</span></li>
+          <li><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg><span><strong>健康巡檢報告</strong>：完整評估植物現狀並附上專屬養護指引</span></li>
         </ul>
         <button class="btn btn-primary" onclick="openBooking('care')">預約到府整理</button>
       </div>
