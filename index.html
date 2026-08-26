@@ -453,14 +453,9 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .pm-care li{display:flex;gap:10px;font-size:15.5px;color:var(--ink-soft);padding:9px 0;border-bottom:1px solid var(--line);}
 .pm-care li .icon{width:14px;height:14px;color:var(--accent);margin-top:3px;flex-shrink:0;}
 .pm-care-icons li{display:flex;align-items:flex-start;gap:14px;border-bottom:none;padding:11px 0;}
-.pm-care-icons .pci-icon{flex-shrink:0;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
-.pm-care-icons .pci-icon .icon{width:19px;height:19px;stroke-width:1.7;margin-top:0;}
-.pm-care-icons .pci-icon.pci-sun{background:#FBF0DC;color:#C99A45;}
-.pm-care-icons .pci-icon.pci-temp{background:#F7E4DC;color:#C17C5C;}
-.pm-care-icons .pci-icon.pci-humidity{background:#E3EEF2;color:#5E8FA3;}
-.pm-care-icons .pci-icon.pci-water{background:#E6ECE7;color:#4A5D4E;}
+.pm-care-icons .pci-icon{flex-shrink:0;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin-top:6px;}
+.pm-care-icons .pci-icon .icon{width:22px;height:22px;stroke-width:2.1;color:#1A1A1A;margin-top:0;}
 .pm-care-icons .pci-text{font-size:15px;color:var(--ink-soft);line-height:1.65;padding-top:7px;}
-.pm-care-icons .pci-text strong{color:var(--ink);font-weight:700;margin-right:8px;}
 .pm-actions{display:flex;align-items:center;gap:16px;margin-top:28px;flex-wrap:wrap;}
 .qty-stepper{display:flex;align-items:center;gap:14px;border:1px solid var(--line);border-radius:var(--r-full);padding:6px 8px;}
 .qty-stepper button{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .25s;}
@@ -1349,12 +1344,12 @@ document.getElementById('pmVisual').addEventListener('click', (e)=>{
 
 function renderCareIcons(info){
   const rows = [
-    {icon:'i-sun', cls:'pci-sun', label:'光線', text:info.light},
-    {icon:'i-thermometer', cls:'pci-temp', label:'生長適溫', text:info.temp},
-    {icon:'i-water', cls:'pci-humidity', label:'濕度', text:info.humidity},
-    {icon:'i-watering-can', cls:'pci-water', label:'澆水頻率', text:info.water}
+    {icon:'i-sun', text:info.light},
+    {icon:'i-thermometer', text:info.temp},
+    {icon:'i-water', text:info.humidity},
+    {icon:'i-watering-can', text:info.water}
   ];
-  return rows.map(r=>`<li class="pci-row"><span class="pci-icon ${r.cls}"><svg class="icon" viewBox="0 0 24 24"><use href="#${r.icon}"/></svg></span><span class="pci-text"><strong>${r.label}</strong>${r.text}</span></li>`).join('');
+  return rows.map(r=>`<li class="pci-row"><span class="pci-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#${r.icon}"/></svg></span><span class="pci-text">${r.text}</span></li>`).join('');
 }
 function openProduct(id){
   currentProduct = PRODUCTS.find(p=> p.id===id);
