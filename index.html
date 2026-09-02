@@ -302,9 +302,11 @@ ul{list-style:none;}
 .rb-card h4{font-size:18.5px;font-weight:700;margin-bottom:10px;color:var(--accent-dark);}
 .rb-card p{font-size:15.5px;color:var(--ink-soft);line-height:1.75;}
 .rental-service-detail{text-align:left;max-width:720px;margin:0 auto;}
+.rental-service-detail li{border-bottom:none;}
 .rental-terms-list{text-align:left;max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:28px;}
-.rental-terms-list h4{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--ink);}
-.rental-terms-list p{font-size:15px;color:var(--ink-soft);line-height:1.8;}
+.rental-terms-list h4{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--ink);display:flex;align-items:center;gap:10px;}
+.rental-terms-list h4::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.rental-terms-list p{font-size:16px;color:var(--ink-soft);line-height:1.8;}
 
 /* ===================== PLANTS CATALOG ===================== */
 .filter-row{display:flex;justify-content:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
@@ -586,7 +588,9 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
         <button class="nav-link">綠意空間訂閱 <svg class="icon" viewBox="0 0 24 24"><use href="#i-chevron"/></svg></button>
         <div class="dropdown">
           <a href="#rental" data-tab="build">自由搭配 <span style="margin-left:auto;font-size:11px;opacity:.5">Build Own</span></a>
+          <!-- 暫時停用：植栽套餐
           <a href="#rental" data-tab="package">植栽套餐 <span style="margin-left:auto;font-size:11px;opacity:.5">Packages</span></a>
+          -->
           <a href="#rental" data-tab="custom">客製化綠意 <span style="margin-left:auto;font-size:11px;opacity:.5">Custom</span></a>
         </div>
       </div>
@@ -616,7 +620,9 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     <div class="mm-head">綠意空間訂閱 <svg class="icon" viewBox="0 0 24 24"><use href="#i-chevron"/></svg></div>
     <div class="mm-sub">
       <a href="#rental" data-tab="build">自由搭配</a>
+      <!-- 暫時停用：植栽套餐
       <a href="#rental" data-tab="package">植栽套餐</a>
+      -->
       <a href="#rental" data-tab="custom">客製化綠意</a>
     </div>
   </div>
@@ -665,12 +671,14 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     <div class="section-head reveal">
       <p class="eyebrow" style="justify-content:center;">PLANT RENTAL</p>
       <h2>綠意空間訂閱</h2>
-      <p>我們提供全方位的植物規劃與專業維護，為商業與辦公空間打造低維護、高質感的綠意環境。<br>您負責享受綠意，植栽的健康與美感交給我們。</p>
+      <p>我們提供全方位的植物規劃與專業維護，<br>為商業與辦公空間打造低維護、高質感的綠意環境。<br>您負責享受綠意，植栽的健康與美感交給我們。</p>
     </div>
 
     <div class="tabs reveal" id="rentalTabs">
       <button class="tab-btn active" data-tab="build">自由搭配</button>
+      <!-- 暫時停用：植栽套餐
       <button class="tab-btn" data-tab="package">植栽套餐</button>
+      -->
       <button class="tab-btn" data-tab="custom">客製化綠意</button>
     </div>
 
@@ -686,6 +694,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
       <div class="rental-cta-row"><button class="btn btn-primary" onclick="openBooking('site')">預約場勘</button></div>
     </div>
 
+    <!-- 暫時停用：植栽套餐
     <div class="tab-panel" data-panel="package">
       <div class="pkg-grid">
         <div class="pkg-card">
@@ -724,6 +733,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
         </div>
       </div>
     </div>
+    -->
 
     <div class="tab-panel active" data-panel="build">
       <p style="text-align:center;font-size:15.5px;color:var(--ink-soft);max-width:520px;margin:0 auto 34px;">依空間光照條件，自由挑選適合的植栽。</p>
