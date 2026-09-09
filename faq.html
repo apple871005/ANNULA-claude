@@ -796,7 +796,10 @@ function renderFAQ(){
 
   wrap.querySelectorAll('.faq-q').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      btn.closest('.faq-item').classList.toggle('open');
+      const item = btn.closest('.faq-item');
+      const willOpen = !item.classList.contains('open');
+      wrap.querySelectorAll('.faq-item.open').forEach(el=> el.classList.remove('open'));
+      if(willOpen){ item.classList.add('open'); }
     });
   });
 }
