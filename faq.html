@@ -679,6 +679,25 @@ footer{margin-top:0;}
 <!-- ============ FAQ CONTENT ============ -->
 <div class="faq-wrap" id="faqWrap"></div>
 
+<!-- ============ OVERLAY + BOOKING MODAL ============ -->
+<div class="overlay-scrim" id="scrim"></div>
+<div class="simple-modal" id="bookingModal" role="dialog" aria-modal="true">
+  <button class="modal-close" id="bkClose"><svg class="icon" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
+  <div class="sm-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#i-pin"/></svg></div>
+  <h3>預約場勘</h3>
+  <p>留下您的空間需求，年輪專員將盡快與您聯繫進行現場評估。</p>
+  <div class="field"><label>期望日期</label><input type="date"></div>
+  <div class="field"><label>空間地址／備註</label><input type="text" placeholder="例：台北市信義區辦公室，約 40 坪"></div>
+  <button class="btn btn-primary btn-block" id="bkSubmit">送出需求</button>
+</div>
+<div class="simple-modal" id="successModal" role="dialog" aria-modal="true">
+  <button class="modal-close" id="successClose"><svg class="icon" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
+  <div class="sm-icon"><svg class="icon" viewBox="0 0 24 24"><use href="#i-check"/></svg></div>
+  <h3>已收到您的預約</h3>
+  <p>年輪專員將盡快與您聯繫進行現場評估。</p>
+  <button class="btn btn-primary btn-block" id="successOk">完成</button>
+</div>
+
 <!-- ============ FOOTER ============ -->
 <footer>
   <div class="container">
@@ -727,6 +746,38 @@ document.querySelectorAll('.mm-head').forEach(h=>{
 });
 mobileMenu.querySelectorAll('a').forEach(a=> a.addEventListener('click', ()=> mobileMenu.classList.remove('open')));
 
+/* ---- 預約場勘 booking modal ---- */
+const scrim = document.getElementById('scrim');
+const bookingModal = document.getElementById('bookingModal');
+const successModal = document.getElementById('successModal');
+function openOverlay(el){ scrim.classList.add('show'); el.classList.add('show'); }
+function closeOverlay(el){
+  el.classList.remove('show');
+  if(!document.querySelector('.simple-modal.show')){ scrim.classList.remove('show'); }
+}
+function openBooking(){ openOverlay(bookingModal); }
+document.getElementById('bkClose').addEventListener('click', ()=> closeOverlay(bookingModal));
+document.getElementById('bkSubmit').addEventListener('click', ()=>{
+  closeOverlay(bookingModal);
+  openOverlay(successModal);
+});
+document.getElementById('successClose').addEventListener('click', ()=> closeOverlay(successModal));
+document.getElementById('successOk').addEventListener('click', ()=> closeOverlay(successModal));
+scrim.addEventListener('click', ()=>{
+  document.querySelectorAll('.simple-modal.show').forEach(m=> m.classList.remove('show'));
+  scrim.classList.remove('show');
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.simple-modal.show').forEach(m=> m.classList.remove('show'));
+    scrim.classList.remove('show');
+  }
+});
+document.addEventListener('click', e=>{
+  const a = e.target.closest('[data-book-site]');
+  if(a){ e.preventDefault(); openBooking(); }
+});
+
 /* ---- nav behaviour: hide on scroll down, reveal on scroll up ---- */
 const navbar = document.getElementById('navbar');
 let lastScrollY = window.scrollY;
@@ -767,9 +818,9 @@ const FAQ_DATA = [
     {q:'21. 我們辦公室採光不好，也可以擺放植物嗎？', a:'可以的！ANNULA 備有「喜光耐曬型」、「明亮散光型」與「室內耐陰型」等多種植栽選項。我們會依據您的環境光線（包含人工燈光）推薦最適合的植物。'},
     {q:'22. 訂閱期間植物如果枯萎了怎麼辦？', a:'訂閱期間若非人為故意破壞導致的植栽衰敗或枯萎，ANNULA 提供<strong>無條件免費更換新株</strong>服務，確保您的空間始終保持最佳綠意狀態。'},
     {q:'23. 定期養護與巡檢的頻率是多久一次？', a:'訂閱期間，養護專員會於<strong>每週固定時間</strong>親自到府進行巡檢與維護。針對植物健康狀態進行調整、清潔擦拭葉面、修剪整姿並補充所需養分，確保您的空間隨時維持在最佳的綠意美感狀態。'},
-    {q:'24. 可以針對我們的空間風格進行「客製化訂閱」嗎？', a:'可以的！您可以預約專員到府場勘，我們會依據現場的光照條件、通風狀況、動線與品牌裝潢風格，為您量身打造專屬的植栽與客製盆器方案。<div class="faq-cta"><p class="faq-cta-lead">💡 還不確定空間適合什麼植物嗎？</p><p>別擔心！點擊 <a class="faq-link" href="index.html#book-site">預約場勘</a>，讓我們到現場幫你看光照、量尺寸。</p></div>'},
+    {q:'24. 可以針對我們的空間風格進行「客製化訂閱」嗎？', a:'可以的！您可以預約專員到府場勘，我們會依據現場的光照條件、通風狀況、動線與品牌裝潢風格，為您量身打造專屬的植栽與客製盆器方案。<div class="faq-cta"><p class="faq-cta-lead">💡 還不確定空間適合什麼植物嗎？</p><p>別擔心！點擊 <a class="faq-link" href="javascript:void(0)" data-book-site>預約場勘</a>，讓我們到現場幫你看光照、量尺寸。</p></div>'},
     {q:'25. 綠意空間訂閱服務的合作流程為何？', a:'流程共有 5 個步驟：<br>1. 線上預約 / 諮詢 → 2. 到府場勘 → 3. 規劃設計 → 4. 提案報價 → 5. 進場施作 → 6. 定期維護。'},
-    {q:'26. 想預約場勘或了解訂閱細節，該如何聯繫 ANNULA？', a:'您可以透過點擊 <a class="faq-link" href="index.html#book-site">預約場勘</a> 填寫空間需求，或點選 <a class="faq-link" href="https://line.me/R/ti/p/@072qhfoz" target="_blank" rel="noopener">官方 LINE 客服</a> 直接線上與我們聊聊。專員將於工作日內盡快與您聯繫，為您規劃最適合的綠意提案！'},
+    {q:'26. 想預約場勘或了解訂閱細節，該如何聯繫 ANNULA？', a:'您可以透過點擊 <a class="faq-link" href="javascript:void(0)" data-book-site>預約場勘</a> 填寫空間需求，或點選 <a class="faq-link" href="https://line.me/R/ti/p/@072qhfoz" target="_blank" rel="noopener">官方 LINE 客服</a> 直接線上與我們聊聊。專員將於工作日內盡快與您聯繫，為您規劃最適合的綠意提案！'},
   ]},
   {cat:'三、綠植到府整理服務（Plant Care Service）', items:[
     {q:'27. 我家／公司的植物長大了或生病了，可以單次預約整理嗎？', a:'可以！我們提供「綠植到府整理」單次服務，收費為 <strong>NT$1,200 起</strong>。'},
