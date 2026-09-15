@@ -1260,7 +1260,7 @@ function productCardHTML(p, labelMap, i, displayLight){
       ${labelMap ? `<p class="pc-tag">${labelMap[light]}</p>` : ''}
       <h4>${p.name}</h4>
       <span class="pc-en">${p.en}</span>
-      <div class="pc-meta"><span>高度 <span class="num">${p.height}</span></span><span class="price">NT$${p.price.toLocaleString()}${p.priceUnit ? '／'+p.priceUnit : ''}</span></div>
+      <div class="pc-meta"><span${p.category==='shop' ? ' style="visibility:hidden"' : ''}>高度 <span class="num">${p.height}</span></span><span class="price">NT$${p.price.toLocaleString()}${p.priceUnit ? '／'+p.priceUnit : ''}</span></div>
     </div>`;
 }
 function bindProductCards(containerId){
@@ -1485,7 +1485,9 @@ function openProduct(id){
   pmQty = 1;
   pmImageIndex = 0;
   renderPmVisual();
-  document.getElementById('pmTag').innerHTML = (currentProduct.category==='rental' ? LIGHT_LABEL[currentProduct.light] + ' ・ ' : '') + '高度 <span class="num">' + currentProduct.height + '</span>';
+  document.getElementById('pmTag').innerHTML = currentProduct.category==='rental'
+    ? LIGHT_LABEL[currentProduct.light] + ' ・ ' + '高度 <span class="num">' + currentProduct.height + '</span>'
+    : '';
   document.getElementById('pmName').textContent = currentProduct.name;
   document.getElementById('pmEn').textContent = currentProduct.en;
   document.getElementById('pmPrice').innerHTML = 'NT$' + currentProduct.price.toLocaleString() + '<span> ／' + (currentProduct.priceUnit || '盆') + '</span>';
