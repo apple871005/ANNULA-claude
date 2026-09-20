@@ -587,12 +587,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 
 <style>
 /* ===================== CASE STUDIES PAGE ===================== */
-.cases-hero{padding:160px 0 56px;text-align:center;}
-.cases-hero .eyebrow{justify-content:center;margin-bottom:16px;}
-.cases-hero h1{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;font-size:clamp(30px,4vw,46px);letter-spacing:.01em;margin-bottom:10px;}
-.cases-hero p{color:var(--ink-soft);font-size:15px;letter-spacing:.04em;}
-.case-wrap{padding:0 0 40px;}
-.case-tabs-row{padding:0 20px;margin-bottom:10px;}
+.case-wrap{padding:150px 0 40px;}
 .case-empty{text-align:center;padding:100px 20px;color:var(--ink-soft);}
 .case-empty .icon{width:32px;height:32px;margin-bottom:14px;color:var(--wood);}
 .case-empty p{font-size:14.5px;}
@@ -661,7 +656,13 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
       </div>
       <a href="index.html#products" class="nav-link">精選商品</a>
       <a href="index.html#care" class="nav-link">綠植到府整理</a>
-      <a href="projects.html" class="nav-link active">案例作品</a>
+      <div class="nav-item">
+        <button class="nav-link active">案例作品 <svg class="icon" viewBox="0 0 24 24"><use href="#i-chevron"/></svg></button>
+        <div class="dropdown">
+          <a href="projects.html?cat=commercial">商業空間案例</a>
+          <a href="projects.html?cat=living">居家空間案例</a>
+        </div>
+      </div>
       <a href="index.html#about" class="nav-link">關於年輪</a>
       <a href="faq.html" class="nav-link">常見問題</a>
     </div>
@@ -687,28 +688,19 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   </div>
   <a href="index.html#products" class="mm-single">精選商品</a>
   <a href="index.html#care" class="mm-single">綠植到府整理</a>
-  <a href="projects.html" class="mm-single">案例作品</a>
+  <div class="mm-group" data-group="cases">
+    <div class="mm-head">案例作品 <svg class="icon" viewBox="0 0 24 24"><use href="#i-chevron"/></svg></div>
+    <div class="mm-sub">
+      <a href="projects.html?cat=commercial">商業空間案例</a>
+      <a href="projects.html?cat=living">居家空間案例</a>
+    </div>
+  </div>
   <a href="index.html#about" class="mm-single">關於年輪</a>
   <a href="faq.html" class="mm-single">常見問題</a>
 </div>
 
-<!-- ============ CASES HERO ============ -->
-<section class="cases-hero">
-  <div class="container">
-    <p class="eyebrow">CASE STUDIES</p>
-    <h1>案例作品</h1>
-    <p>Commercial &amp; Living Space Projects</p>
-  </div>
-</section>
-
 <!-- ============ CASES CONTENT ============ -->
 <div class="case-wrap">
-  <div class="case-tabs-row">
-    <div class="tabs" id="caseTabs">
-      <button class="tab-btn active" data-cat="commercial">商業空間案例</button>
-      <button class="tab-btn" data-cat="living">居家空間案例</button>
-    </div>
-  </div>
   <div id="caseSections"></div>
 </div>
 
@@ -917,13 +909,14 @@ const CASE_DATA = {
 const CASE_BY_ID = {};
 Object.values(CASE_DATA).forEach(list=> list.forEach(c=> CASE_BY_ID[c.id] = c));
 
-let caseCat = 'commercial';
+const caseCatParam = new URLSearchParams(window.location.search).get('cat');
+const caseCat = (caseCatParam === 'commercial' || caseCatParam === 'living') ? caseCatParam : 'all';
 const caseTrackPos = {};
 const casePendingSnap = {};
 const caseSections = document.getElementById('caseSections');
 
 function renderCaseSections(){
-  const list = CASE_DATA[caseCat] || [];
+  const list = caseCat === 'all' ? [...CASE_DATA.commercial, ...CASE_DATA.living] : (CASE_DATA[caseCat] || []);
   if(list.length === 0){
     caseSections.innerHTML = `
       <div class="case-empty">
@@ -954,14 +947,6 @@ function renderCaseSections(){
     updateCaseCarousel(c.id);
   });
 }
-
-document.querySelectorAll('#caseTabs .tab-btn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('#caseTabs .tab-btn').forEach(b=> b.classList.toggle('active', b===btn));
-    caseCat = btn.dataset.cat;
-    renderCaseSections();
-  });
-});
 
 /* Infinite-loop track: [clone(last), real 0..n-1, clone(first)].
    Track position 0 and n+1 are clones; real slide i lives at position i+1. */
