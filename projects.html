@@ -605,22 +605,47 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .case-empty p{font-size:14.5px;}
 
 #caseModal{
-  position:fixed;z-index:121;top:50%;left:50%;
-  width:max-content;max-width:94vw;max-height:92vh;overflow:hidden;
-  background:var(--bg);border-radius:0;
-  transform:translate(-50%,-46%) scale(.94);opacity:0;visibility:hidden;pointer-events:none;
-  transition:transform .45s var(--ease), opacity .4s var(--ease), visibility .4s;
-  box-shadow:0 40px 90px -30px rgba(0,0,0,.4);
+  position:fixed;inset:0;z-index:121;
+  background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  padding:80px 0 40px;
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .45s var(--ease), visibility .45s;
 }
-#caseModal.show{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;pointer-events:auto;}
-.case-modal-visual{position:relative;background:#151815;display:flex;align-items:center;justify-content:center;max-width:94vw;max-height:min(76vh,760px);}
-.case-modal-visual img{display:block;max-width:94vw;max-height:min(76vh,760px);width:auto;height:auto;}
-.case-modal-caption{padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
-.case-modal-caption h3{font-size:18px;font-weight:700;}
-.case-modal-caption .counter{font-size:13px;color:var(--ink-soft);white-space:nowrap;}
+#caseModal.show{opacity:1;visibility:visible;pointer-events:auto;}
+#caseModal .modal-close{position:absolute;top:24px;right:24px;}
+.case-modal-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;font-size:clamp(22px,3vw,32px);color:var(--ink);text-align:center;letter-spacing:.02em;padding:0 70px;}
+.carousel-viewport{
+  position:relative;width:100%;max-width:1400px;
+  overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+  mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
+}
+.carousel-track{display:flex;align-items:center;gap:24px;transition:transform .5s var(--ease);will-change:transform;}
+.carousel-slide{
+  flex:0 0 auto;width:min(58vw,760px);height:min(60vh,560px);
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:var(--bg-card);cursor:pointer;
+  opacity:.38;transform:scale(.9);
+  transition:opacity .5s var(--ease), transform .5s var(--ease);
+}
+.carousel-slide.active{opacity:1;transform:scale(1);cursor:default;}
+.carousel-slide img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;}
+.carousel-nav.pm-nav{width:44px;height:44px;}
+.carousel-nav.pm-nav-prev{left:20px;}
+.carousel-nav.pm-nav-next{right:20px;}
+.carousel-thumbs{display:flex;gap:10px;max-width:92vw;overflow-x:auto;padding:4px;scrollbar-width:none;}
+.carousel-thumbs::-webkit-scrollbar{display:none;}
+.carousel-thumbs img{width:60px;height:60px;object-fit:cover;cursor:pointer;opacity:.45;border:2px solid transparent;transition:opacity .3s,border-color .3s;flex-shrink:0;display:block;}
+.carousel-thumbs img.active{opacity:1;border-color:var(--accent);}
 @media (max-width:680px){
-  .case-modal-visual{max-height:min(52vh,460px);}
-  .case-modal-caption{padding:16px 20px;}
+  #caseModal{padding:70px 0 24px;gap:18px;}
+  .case-modal-title{font-size:19px;padding:0 56px;}
+  .carousel-slide{width:76vw;height:44vh;}
+  .carousel-thumbs img{width:46px;height:46px;}
+  .carousel-nav.pm-nav{width:36px;height:36px;}
+  .carousel-nav.pm-nav-prev{left:8px;}
+  .carousel-nav.pm-nav-next{right:8px;}
 }
 .nav-link.active{background:rgba(43,48,44,.06);}
 </style>
@@ -692,18 +717,16 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   <div class="case-grid" id="caseGrid"></div>
 </div>
 
-<!-- ============ CASE LIGHTBOX ============ -->
+<!-- ============ CASE GALLERY CAROUSEL ============ -->
 <div id="caseModal" role="dialog" aria-modal="true">
   <button class="modal-close" id="caseClose"><svg class="icon" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
-  <div class="case-modal-visual" id="caseVisual">
-    <button type="button" class="pm-nav pm-nav-prev" aria-label="上一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
-    <img id="caseImg" src="" alt="">
-    <button type="button" class="pm-nav pm-nav-next" aria-label="下一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+  <h3 class="case-modal-title" id="caseModalTitle"></h3>
+  <button type="button" class="pm-nav carousel-nav pm-nav-prev" aria-label="上一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+  <button type="button" class="pm-nav carousel-nav pm-nav-next" aria-label="下一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+  <div class="carousel-viewport">
+    <div class="carousel-track" id="carouselTrack"></div>
   </div>
-  <div class="case-modal-caption">
-    <h3 id="caseModalTitle"></h3>
-    <span class="counter" id="caseCounter"></span>
-  </div>
+  <div class="carousel-thumbs" id="carouselThumbs"></div>
 </div>
 
 <!-- ============ FOOTER ============ -->
@@ -930,29 +953,62 @@ function openCase(id){
   currentCase = list.find(c=> c.id===id);
   if(!currentCase) return;
   caseImageIndex = 0;
-  renderCaseImage();
+  document.getElementById('caseModalTitle').textContent = currentCase.name;
+  renderCaseCarousel(true);
   openOverlay(caseModal);
 }
-function renderCaseImage(){
+function renderCaseCarousel(rebuild){
   if(!currentCase) return;
-  const total = currentCase.images.length;
-  document.getElementById('caseImg').src = currentCase.images[caseImageIndex];
-  document.getElementById('caseImg').alt = currentCase.name + ' 案例照片';
-  document.getElementById('caseModalTitle').textContent = currentCase.name;
-  document.getElementById('caseCounter').textContent = (caseImageIndex+1) + ' / ' + total;
-  document.getElementById('caseVisual').classList.toggle('has-multi', total > 1);
+  const track = document.getElementById('carouselTrack');
+  const thumbs = document.getElementById('carouselThumbs');
+  if(rebuild){
+    track.innerHTML = currentCase.images.map((src,i)=> `
+      <div class="carousel-slide" data-idx="${i}"><img src="${src}" alt="${currentCase.name} 案例照片 ${i+1}" loading="lazy"></div>
+    `).join('');
+    thumbs.innerHTML = currentCase.images.map((src,i)=> `
+      <img data-idx="${i}" src="${src}" alt="${currentCase.name} 縮圖 ${i+1}">
+    `).join('');
+    track.querySelectorAll('.carousel-slide').forEach(slide=>{
+      slide.addEventListener('click', ()=>{
+        const idx = parseInt(slide.dataset.idx,10);
+        if(idx !== caseImageIndex){ caseImageIndex = idx; renderCaseCarousel(false); }
+      });
+    });
+    thumbs.querySelectorAll('img').forEach(t=>{
+      t.addEventListener('click', ()=>{
+        caseImageIndex = parseInt(t.dataset.idx,10);
+        renderCaseCarousel(false);
+      });
+    });
+  }
+  track.querySelectorAll('.carousel-slide').forEach((slide,i)=>{
+    slide.classList.toggle('active', i===caseImageIndex);
+  });
+  thumbs.querySelectorAll('img').forEach((t,i)=>{
+    t.classList.toggle('active', i===caseImageIndex);
+  });
+  centerCarousel();
+  const activeThumb = thumbs.querySelector('img.active');
+  if(activeThumb) activeThumb.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+}
+function centerCarousel(){
+  const track = document.getElementById('carouselTrack');
+  const viewport = track.parentElement;
+  const activeSlide = track.children[caseImageIndex];
+  if(!activeSlide || !viewport) return;
+  const tx = viewport.clientWidth/2 - (activeSlide.offsetLeft + activeSlide.offsetWidth/2);
+  track.style.transform = 'translateX(' + tx + 'px)';
 }
 function stepCaseImage(dir){
   if(!currentCase || currentCase.images.length < 2) return;
   const total = currentCase.images.length;
   caseImageIndex = (caseImageIndex + dir + total) % total;
-  renderCaseImage();
+  renderCaseCarousel(false);
 }
-document.getElementById('caseVisual').addEventListener('click', e=>{
-  if(e.target.closest('.pm-nav-prev')){ stepCaseImage(-1); return; }
-  if(e.target.closest('.pm-nav-next')){ stepCaseImage(1); return; }
-});
+document.querySelector('#caseModal .pm-nav-prev').addEventListener('click', ()=> stepCaseImage(-1));
+document.querySelector('#caseModal .pm-nav-next').addEventListener('click', ()=> stepCaseImage(1));
 document.getElementById('caseClose').addEventListener('click', ()=> closeOverlay(caseModal));
+window.addEventListener('resize', ()=>{ if(caseModal.classList.contains('show')) centerCarousel(); });
 
 renderCaseGrid();
 </script>
