@@ -973,7 +973,20 @@ function updateCaseCarousel(id){
   [...thumbs.children].forEach((t,i)=> t.classList.toggle('active', i===realIdx));
   centerCaseCarousel(id, pos);
   const activeThumb = thumbs.children[realIdx];
-  if(activeThumb) activeThumb.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
+  if(activeThumb){
+    /* scroll only the thumbnail strip itself (never the page) --
+       native scrollIntoView walks every scrollable ancestor including
+       the document, which was yanking the whole page down to whichever
+       case's thumbnail happened to be off-screen at render time.
+       offsetLeft isn't usable here either (.carousel-thumbs has no
+       positioned/transformed ancestor of its own, so it resolves against
+       some far-off ancestor) -- use getBoundingClientRect deltas instead,
+       which are always relative to the viewport regardless of offsetParent. */
+    const thumbRect = activeThumb.getBoundingClientRect();
+    const thumbsRect = thumbs.getBoundingClientRect();
+    const target = thumbs.scrollLeft + (thumbRect.left - thumbsRect.left) + thumbRect.width/2 - thumbsRect.width/2;
+    thumbs.scrollTo({ left: target, behavior: 'smooth' });
+  }
 }
 function centerCaseCarousel(id, pos){
   const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
