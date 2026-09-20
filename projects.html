@@ -591,30 +591,23 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .cases-hero .eyebrow{justify-content:center;margin-bottom:16px;}
 .cases-hero h1{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;font-size:clamp(30px,4vw,46px);letter-spacing:.01em;margin-bottom:10px;}
 .cases-hero p{color:var(--ink-soft);font-size:15px;letter-spacing:.04em;}
-.case-wrap{max-width:1040px;margin:0 auto;padding:0 20px 140px;}
-.case-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:30px;}
-@media (max-width:780px){.case-grid{grid-template-columns:1fr;}}
-.case-card{cursor:pointer;border-radius:0;overflow:hidden;position:relative;aspect-ratio:4/3;background:var(--bg-card);}
-.case-card img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease);display:block;}
-.case-card:hover img{transform:scale(1.06);}
-.case-card .case-card-label{position:absolute;left:0;right:0;bottom:0;padding:26px 28px;background:linear-gradient(to top, rgba(20,24,20,.72), rgba(20,24,20,0));color:#fff;}
-.case-card .case-card-label h3{font-size:19px;font-weight:700;margin-bottom:4px;}
-.case-card .case-card-label span{font-size:12.5px;letter-spacing:.06em;opacity:.85;}
-.case-empty{grid-column:1/-1;text-align:center;padding:70px 20px;color:var(--ink-soft);border:1px dashed var(--line);border-radius:var(--r-lg);}
+.case-wrap{padding:0 0 40px;}
+.case-tabs-row{padding:0 20px;margin-bottom:10px;}
+.case-empty{text-align:center;padding:100px 20px;color:var(--ink-soft);}
 .case-empty .icon{width:32px;height:32px;margin-bottom:14px;color:var(--wood);}
 .case-empty p{font-size:14.5px;}
 
-#caseModal{
-  position:fixed;inset:0;z-index:121;
-  background:var(--bg);
+.case-section{
+  min-height:92vh;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
-  padding:80px 0 40px;
-  opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .45s var(--ease), visibility .45s;
+  padding:70px 0;
+  border-top:1px solid var(--line);
 }
-#caseModal.show{opacity:1;visibility:visible;pointer-events:auto;}
-#caseModal .modal-close{position:absolute;top:24px;right:24px;}
-.case-modal-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;font-size:clamp(22px,3vw,32px);color:var(--ink);text-align:center;letter-spacing:.02em;padding:0 70px;}
+.case-section:first-child{border-top:none;}
+.case-section:nth-child(even){background:var(--bg-card);}
+.case-section-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;font-size:clamp(22px,3vw,32px);color:var(--ink);text-align:center;letter-spacing:.02em;padding:0 70px;}
+.case-section-title span{display:block;font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:12.5px;letter-spacing:.08em;color:var(--ink-soft);margin-top:8px;}
+.carousel-wrap{position:relative;width:100%;display:flex;align-items:center;justify-content:center;}
 .carousel-viewport{
   position:relative;width:100%;max-width:1400px;
   overflow:hidden;
@@ -623,15 +616,16 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 }
 .carousel-track{display:flex;align-items:center;gap:24px;transition:transform .5s var(--ease);will-change:transform;}
 .carousel-slide{
-  flex:0 0 auto;width:min(58vw,760px);height:min(60vh,560px);
+  flex:0 0 auto;width:min(58vw,760px);height:min(58vh,560px);
   display:flex;align-items:center;justify-content:center;overflow:hidden;
-  background:var(--bg-card);cursor:pointer;
+  background:var(--bg);cursor:pointer;
   opacity:.38;transform:scale(.9);
   transition:opacity .5s var(--ease), transform .5s var(--ease);
 }
+.case-section:nth-child(even) .carousel-slide{background:var(--bg);}
 .carousel-slide.active{opacity:1;transform:scale(1);cursor:default;}
 .carousel-slide img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;}
-.carousel-nav.pm-nav{width:44px;height:44px;}
+.carousel-nav.pm-nav{width:44px;height:44px;position:absolute;z-index:4;}
 .carousel-nav.pm-nav-prev{left:20px;}
 .carousel-nav.pm-nav-next{right:20px;}
 .carousel-thumbs{display:flex;gap:10px;max-width:92vw;overflow-x:auto;padding:4px;scrollbar-width:none;}
@@ -639,8 +633,8 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .carousel-thumbs img{width:60px;height:60px;object-fit:cover;cursor:pointer;opacity:.45;border:2px solid transparent;transition:opacity .3s,border-color .3s;flex-shrink:0;display:block;}
 .carousel-thumbs img.active{opacity:1;border-color:var(--accent);}
 @media (max-width:680px){
-  #caseModal{padding:70px 0 24px;gap:18px;}
-  .case-modal-title{font-size:19px;padding:0 56px;}
+  .case-section{min-height:auto;padding:56px 0;gap:18px;}
+  .case-section-title{font-size:19px;padding:0 56px;}
   .carousel-slide{width:76vw;height:44vh;}
   .carousel-thumbs img{width:46px;height:46px;}
   .carousel-nav.pm-nav{width:36px;height:36px;}
@@ -710,23 +704,13 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 
 <!-- ============ CASES CONTENT ============ -->
 <div class="case-wrap">
-  <div class="tabs" id="caseTabs">
-    <button class="tab-btn active" data-cat="commercial">商業空間案例</button>
-    <button class="tab-btn" data-cat="living">居家空間案例</button>
+  <div class="case-tabs-row">
+    <div class="tabs" id="caseTabs">
+      <button class="tab-btn active" data-cat="commercial">商業空間案例</button>
+      <button class="tab-btn" data-cat="living">居家空間案例</button>
+    </div>
   </div>
-  <div class="case-grid" id="caseGrid"></div>
-</div>
-
-<!-- ============ CASE GALLERY CAROUSEL ============ -->
-<div id="caseModal" role="dialog" aria-modal="true">
-  <button class="modal-close" id="caseClose"><svg class="icon" viewBox="0 0 24 24"><use href="#i-close"/></svg></button>
-  <h3 class="case-modal-title" id="caseModalTitle"></h3>
-  <button type="button" class="pm-nav carousel-nav pm-nav-prev" aria-label="上一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
-  <button type="button" class="pm-nav carousel-nav pm-nav-next" aria-label="下一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
-  <div class="carousel-viewport">
-    <div class="carousel-track" id="carouselTrack"></div>
-  </div>
-  <div class="carousel-thumbs" id="carouselThumbs"></div>
+  <div id="caseSections"></div>
 </div>
 
 <!-- ============ FOOTER ============ -->
@@ -792,32 +776,6 @@ window.addEventListener('scroll', ()=>{
   else { navbar.classList.remove('nav-hidden'); }
   lastScrollY = y;
 },{passive:true});
-
-/* ---- overlay + lightbox helpers ---- */
-const scrim = document.getElementById('scrim') || (() => {
-  const el = document.createElement('div');
-  el.className = 'overlay-scrim';
-  el.id = 'scrim';
-  document.body.appendChild(el);
-  return el;
-})();
-function openOverlay(el){ scrim.classList.add('show'); el.classList.add('show'); }
-function closeOverlay(el){
-  el.classList.remove('show');
-  if(!document.querySelector('.simple-modal.show, #caseModal.show')){ scrim.classList.remove('show'); }
-}
-scrim.addEventListener('click', ()=>{
-  document.querySelectorAll('.simple-modal.show, #caseModal.show').forEach(m=> m.classList.remove('show'));
-  scrim.classList.remove('show');
-});
-document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){
-    document.querySelectorAll('.simple-modal.show, #caseModal.show').forEach(m=> m.classList.remove('show'));
-    scrim.classList.remove('show');
-  }
-  if(e.key==='ArrowLeft' && caseModal.classList.contains('show')){ stepCaseImage(-1); }
-  if(e.key==='ArrowRight' && caseModal.classList.contains('show')){ stepCaseImage(1); }
-});
 
 /* ---- case study data ---- */
 const CASE_DATA = {
@@ -910,33 +868,43 @@ const CASE_DATA = {
   ],
 };
 
-let caseCat = 'commercial';
-let currentCase = null;
-let caseImageIndex = 0;
-const caseModal = document.getElementById('caseModal');
-const caseGrid = document.getElementById('caseGrid');
+const CASE_BY_ID = {};
+Object.values(CASE_DATA).forEach(list=> list.forEach(c=> CASE_BY_ID[c.id] = c));
 
-function renderCaseGrid(){
+let caseCat = 'commercial';
+const caseImageIndex = {};
+const caseSections = document.getElementById('caseSections');
+
+function renderCaseSections(){
   const list = CASE_DATA[caseCat] || [];
   if(list.length === 0){
-    caseGrid.innerHTML = `
+    caseSections.innerHTML = `
       <div class="case-empty">
         <svg class="icon" viewBox="0 0 24 24"><use href="#i-box"/></svg>
         <p>此分類的案例作品準備中，敬請期待。</p>
       </div>`;
     return;
   }
-  caseGrid.innerHTML = list.map(c => `
-    <div class="case-card" data-id="${c.id}">
-      <img src="${c.cover}" alt="${c.name} 空間規劃案例" loading="lazy">
-      <div class="case-card-label">
-        <h3>${c.name}</h3>
-        <span>${c.en}</span>
+  caseSections.innerHTML = list.map(c => `
+    <section class="case-section" data-case="${c.id}">
+      <h2 class="case-section-title">${c.name}<span>${c.en}</span></h2>
+      <div class="carousel-wrap">
+        <button type="button" class="pm-nav carousel-nav pm-nav-prev" data-case="${c.id}" aria-label="上一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
+        <div class="carousel-viewport">
+          <div class="carousel-track" data-case="${c.id}">
+            ${c.images.map((src,i)=> `<div class="carousel-slide" data-idx="${i}"><img src="${src}" alt="${c.name} 案例照片 ${i+1}" loading="lazy"></div>`).join('')}
+          </div>
+        </div>
+        <button type="button" class="pm-nav carousel-nav pm-nav-next" data-case="${c.id}" aria-label="下一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
       </div>
-    </div>
+      <div class="carousel-thumbs" data-case="${c.id}">
+        ${c.images.map((src,i)=> `<img data-idx="${i}" src="${src}" alt="${c.name} 縮圖 ${i+1}">`).join('')}
+      </div>
+    </section>
   `).join('');
-  caseGrid.querySelectorAll('.case-card').forEach(card=>{
-    card.addEventListener('click', ()=> openCase(card.dataset.id));
+  list.forEach(c=>{
+    if(!(c.id in caseImageIndex)) caseImageIndex[c.id] = 0;
+    updateCaseCarousel(c.id);
   });
 }
 
@@ -944,73 +912,65 @@ document.querySelectorAll('#caseTabs .tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('#caseTabs .tab-btn').forEach(b=> b.classList.toggle('active', b===btn));
     caseCat = btn.dataset.cat;
-    renderCaseGrid();
+    renderCaseSections();
   });
 });
 
-function openCase(id){
-  const list = CASE_DATA[caseCat] || [];
-  currentCase = list.find(c=> c.id===id);
-  if(!currentCase) return;
-  caseImageIndex = 0;
-  document.getElementById('caseModalTitle').textContent = currentCase.name;
-  renderCaseCarousel(true);
-  openOverlay(caseModal);
-}
-function renderCaseCarousel(rebuild){
-  if(!currentCase) return;
-  const track = document.getElementById('carouselTrack');
-  const thumbs = document.getElementById('carouselThumbs');
-  if(rebuild){
-    track.innerHTML = currentCase.images.map((src,i)=> `
-      <div class="carousel-slide" data-idx="${i}"><img src="${src}" alt="${currentCase.name} 案例照片 ${i+1}" loading="lazy"></div>
-    `).join('');
-    thumbs.innerHTML = currentCase.images.map((src,i)=> `
-      <img data-idx="${i}" src="${src}" alt="${currentCase.name} 縮圖 ${i+1}">
-    `).join('');
-    track.querySelectorAll('.carousel-slide').forEach(slide=>{
-      slide.addEventListener('click', ()=>{
-        const idx = parseInt(slide.dataset.idx,10);
-        if(idx !== caseImageIndex){ caseImageIndex = idx; renderCaseCarousel(false); }
-      });
-    });
-    thumbs.querySelectorAll('img').forEach(t=>{
-      t.addEventListener('click', ()=>{
-        caseImageIndex = parseInt(t.dataset.idx,10);
-        renderCaseCarousel(false);
-      });
-    });
-  }
-  track.querySelectorAll('.carousel-slide').forEach((slide,i)=>{
-    slide.classList.toggle('active', i===caseImageIndex);
-  });
-  thumbs.querySelectorAll('img').forEach((t,i)=>{
-    t.classList.toggle('active', i===caseImageIndex);
-  });
-  centerCarousel();
-  const activeThumb = thumbs.querySelector('img.active');
+function updateCaseCarousel(id){
+  const idx = caseImageIndex[id] || 0;
+  const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
+  const thumbs = caseSections.querySelector(`.carousel-thumbs[data-case="${id}"]`);
+  if(!track || !thumbs) return;
+  [...track.children].forEach((slide,i)=> slide.classList.toggle('active', i===idx));
+  [...thumbs.children].forEach((t,i)=> t.classList.toggle('active', i===idx));
+  centerCaseCarousel(id);
+  const activeThumb = thumbs.children[idx];
   if(activeThumb) activeThumb.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
 }
-function centerCarousel(){
-  const track = document.getElementById('carouselTrack');
+function centerCaseCarousel(id){
+  const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
+  if(!track) return;
   const viewport = track.parentElement;
-  const activeSlide = track.children[caseImageIndex];
+  const activeSlide = track.children[caseImageIndex[id] || 0];
   if(!activeSlide || !viewport) return;
   const tx = viewport.clientWidth/2 - (activeSlide.offsetLeft + activeSlide.offsetWidth/2);
   track.style.transform = 'translateX(' + tx + 'px)';
 }
-function stepCaseImage(dir){
-  if(!currentCase || currentCase.images.length < 2) return;
-  const total = currentCase.images.length;
-  caseImageIndex = (caseImageIndex + dir + total) % total;
-  renderCaseCarousel(false);
+function setCaseImage(id, idx){
+  const c = CASE_BY_ID[id];
+  if(!c) return;
+  const total = c.images.length;
+  caseImageIndex[id] = ((idx % total) + total) % total;
+  updateCaseCarousel(id);
 }
-document.querySelector('#caseModal .pm-nav-prev').addEventListener('click', ()=> stepCaseImage(-1));
-document.querySelector('#caseModal .pm-nav-next').addEventListener('click', ()=> stepCaseImage(1));
-document.getElementById('caseClose').addEventListener('click', ()=> closeOverlay(caseModal));
-window.addEventListener('resize', ()=>{ if(caseModal.classList.contains('show')) centerCarousel(); });
+function stepCaseImage(id, dir){
+  const c = CASE_BY_ID[id];
+  if(!c || c.images.length < 2) return;
+  setCaseImage(id, (caseImageIndex[id] || 0) + dir);
+}
+caseSections.addEventListener('click', e=>{
+  const prevBtn = e.target.closest('.carousel-nav.pm-nav-prev');
+  if(prevBtn){ stepCaseImage(prevBtn.dataset.case, -1); return; }
+  const nextBtn = e.target.closest('.carousel-nav.pm-nav-next');
+  if(nextBtn){ stepCaseImage(nextBtn.dataset.case, 1); return; }
+  const slide = e.target.closest('.carousel-slide');
+  if(slide){
+    const track = slide.closest('.carousel-track');
+    setCaseImage(track.dataset.case, parseInt(slide.dataset.idx,10));
+    return;
+  }
+  const thumb = e.target.closest('.carousel-thumbs img');
+  if(thumb){
+    const thumbsEl = thumb.closest('.carousel-thumbs');
+    setCaseImage(thumbsEl.dataset.case, parseInt(thumb.dataset.idx,10));
+    return;
+  }
+});
+window.addEventListener('resize', ()=>{
+  Object.keys(caseImageIndex).forEach(id=> centerCaseCarousel(id));
+});
 
-renderCaseGrid();
+renderCaseSections();
 </script>
 
 </body>
