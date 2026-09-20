@@ -614,7 +614,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
   mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
 }
-.carousel-track{display:flex;align-items:center;gap:1mm;transition:transform .5s var(--ease);will-change:transform;}
+.carousel-track{display:flex;align-items:center;gap:0.3mm;transition:transform .5s var(--ease);will-change:transform;}
 .carousel-slide{
   flex:0 0 auto;height:min(58vh,560px);
   display:flex;align-items:center;justify-content:center;overflow:hidden;
@@ -1017,9 +1017,22 @@ function setCaseImage(id, idx){
   caseTrackPos[id] = real + 1;
   updateCaseCarousel(id);
 }
+function resolveCasePendingSnap(id){
+  const snapTo = casePendingSnap[id];
+  if(snapTo == null) return;
+  casePendingSnap[id] = null;
+  caseTrackPos[id] = snapTo;
+  const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
+  if(!track) return;
+  track.style.transition = 'none';
+  updateCaseCarousel(id);
+  void track.offsetWidth;
+  track.style.transition = '';
+}
 function stepCaseImage(id, dir){
   const c = CASE_BY_ID[id];
   if(!c || c.images.length < 2) return;
+  resolveCasePendingSnap(id);
   goToTrackPos(id, (caseTrackPos[id] ?? 1) + dir);
 }
 caseSections.addEventListener('click', e=>{
@@ -1044,16 +1057,7 @@ caseSections.addEventListener('click', e=>{
 });
 caseSections.addEventListener('transitionend', e=>{
   if(!e.target.classList || !e.target.classList.contains('carousel-track') || e.propertyName !== 'transform') return;
-  const id = e.target.dataset.case;
-  const snapTo = casePendingSnap[id];
-  if(snapTo == null) return;
-  casePendingSnap[id] = null;
-  caseTrackPos[id] = snapTo;
-  const track = e.target;
-  track.style.transition = 'none';
-  updateCaseCarousel(id);
-  void track.offsetWidth;
-  track.style.transition = '';
+  resolveCasePendingSnap(e.target.dataset.case);
 });
 /* auto-sized slides can change width once their image finishes loading (lazy-loaded
    neighbours in particular), which shifts later siblings — recenter, without animating,
