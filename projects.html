@@ -594,7 +594,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .case-wrap{max-width:1040px;margin:0 auto;padding:0 20px 140px;}
 .case-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:30px;}
 @media (max-width:780px){.case-grid{grid-template-columns:1fr;}}
-.case-card{cursor:pointer;border-radius:var(--r-lg);overflow:hidden;position:relative;aspect-ratio:4/3;background:var(--bg-card);}
+.case-card{cursor:pointer;border-radius:0;overflow:hidden;position:relative;aspect-ratio:4/3;background:var(--bg-card);}
 .case-card img{width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease);display:block;}
 .case-card:hover img{transform:scale(1.06);}
 .case-card .case-card-label{position:absolute;left:0;right:0;bottom:0;padding:26px 28px;background:linear-gradient(to top, rgba(20,24,20,.72), rgba(20,24,20,0));color:#fff;}
@@ -606,21 +606,21 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 
 #caseModal{
   position:fixed;z-index:121;top:50%;left:50%;
-  width:min(1100px,94vw);max-height:92vh;overflow:hidden;
-  background:var(--bg);border-radius:var(--r-lg);
+  width:max-content;max-width:94vw;max-height:92vh;overflow:hidden;
+  background:var(--bg);border-radius:0;
   transform:translate(-50%,-46%) scale(.94);opacity:0;visibility:hidden;pointer-events:none;
   transition:transform .45s var(--ease), opacity .4s var(--ease), visibility .4s;
   box-shadow:0 40px 90px -30px rgba(0,0,0,.4);
 }
 #caseModal.show{transform:translate(-50%,-50%) scale(1);opacity:1;visibility:visible;pointer-events:auto;}
-.case-modal-visual{position:relative;background:#151815;display:flex;align-items:center;justify-content:center;height:min(70vh,720px);}
-.case-modal-visual img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;}
-.case-modal-caption{padding:22px 60px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.case-modal-visual{position:relative;background:#151815;display:flex;align-items:center;justify-content:center;max-width:94vw;max-height:min(76vh,760px);}
+.case-modal-visual img{display:block;max-width:94vw;max-height:min(76vh,760px);width:auto;height:auto;}
+.case-modal-caption{padding:20px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .case-modal-caption h3{font-size:18px;font-weight:700;}
 .case-modal-caption .counter{font-size:13px;color:var(--ink-soft);white-space:nowrap;}
 @media (max-width:680px){
-  .case-modal-visual{height:min(48vh,420px);}
-  .case-modal-caption{padding:18px 24px;}
+  .case-modal-visual{max-height:min(52vh,460px);}
+  .case-modal-caption{padding:16px 20px;}
 }
 .nav-link.active{background:rgba(43,48,44,.06);}
 </style>
@@ -803,10 +803,10 @@ const CASE_DATA = {
       id: 'kijii-clinic',
       name: '氣質診所 KIJII CLINIC',
       en: 'Commercial Space',
-      cover: "projects-web/commercial space/KIJII CLINIC/DSC05011.jpg",
+      cover: "projects-web/commercial space/KIJII CLINIC/DSC04999.jpg",
       images: [
-        "projects-web/commercial space/KIJII CLINIC/DSC05011.jpg",
         "projects-web/commercial space/KIJII CLINIC/DSC04999.jpg",
+        "projects-web/commercial space/KIJII CLINIC/DSC05011.jpg",
         "projects-web/commercial space/KIJII CLINIC/DSC05126.jpg",
         "projects-web/commercial space/KIJII CLINIC/DSC05132.jpg",
         "projects-web/commercial space/KIJII CLINIC/DSC05136.jpg",
