@@ -614,17 +614,16 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   -webkit-mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
   mask-image:linear-gradient(to right, transparent 0%, #000 14%, #000 86%, transparent 100%);
 }
-.carousel-track{display:flex;align-items:center;gap:24px;transition:transform .5s var(--ease);will-change:transform;}
+.carousel-track{display:flex;align-items:center;gap:1mm;transition:transform .5s var(--ease);will-change:transform;}
 .carousel-slide{
-  flex:0 0 auto;width:min(58vw,760px);height:min(58vh,560px);
+  flex:0 0 auto;height:min(58vh,560px);
   display:flex;align-items:center;justify-content:center;overflow:hidden;
-  background:var(--bg);cursor:pointer;
+  cursor:pointer;
   opacity:.38;transform:scale(.9);
   transition:opacity .5s var(--ease), transform .5s var(--ease);
 }
-.case-section:nth-child(even) .carousel-slide{background:var(--bg);}
 .carousel-slide.active{opacity:1;transform:scale(1);cursor:default;}
-.carousel-slide img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;}
+.carousel-slide img{height:100%;width:auto;display:block;}
 .carousel-nav.pm-nav{width:44px;height:44px;position:absolute;z-index:4;}
 .carousel-nav.pm-nav-prev{left:20px;}
 .carousel-nav.pm-nav-next{right:20px;}
@@ -635,7 +634,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 @media (max-width:680px){
   .case-section{min-height:auto;padding:56px 0;gap:18px;}
   .case-section-title{font-size:19px;padding:0 56px;}
-  .carousel-slide{width:76vw;height:44vh;}
+  .carousel-slide{height:44vh;}
   .carousel-thumbs img{width:46px;height:46px;}
   .carousel-nav.pm-nav{width:36px;height:36px;}
   .carousel-nav.pm-nav-prev{left:8px;}
@@ -872,7 +871,8 @@ const CASE_BY_ID = {};
 Object.values(CASE_DATA).forEach(list=> list.forEach(c=> CASE_BY_ID[c.id] = c));
 
 let caseCat = 'commercial';
-const caseImageIndex = {};
+const caseTrackPos = {};
+const casePendingSnap = {};
 const caseSections = document.getElementById('caseSections');
 
 function renderCaseSections(){
@@ -892,7 +892,7 @@ function renderCaseSections(){
         <button type="button" class="pm-nav carousel-nav pm-nav-prev" data-case="${c.id}" aria-label="上一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
         <div class="carousel-viewport">
           <div class="carousel-track" data-case="${c.id}">
-            ${c.images.map((src,i)=> `<div class="carousel-slide" data-idx="${i}"><img src="${src}" alt="${c.name} 案例照片 ${i+1}" loading="lazy"></div>`).join('')}
+            ${buildCaseTrackHTML(c)}
           </div>
         </div>
         <button type="button" class="pm-nav carousel-nav pm-nav-next" data-case="${c.id}" aria-label="下一張"><svg class="icon" viewBox="0 0 24 24"><use href="#i-arrow"/></svg></button>
@@ -903,7 +903,7 @@ function renderCaseSections(){
     </section>
   `).join('');
   list.forEach(c=>{
-    if(!(c.id in caseImageIndex)) caseImageIndex[c.id] = 0;
+    if(!(c.id in caseTrackPos)) caseTrackPos[c.id] = 1;
     updateCaseCarousel(c.id);
   });
 }
@@ -916,37 +916,64 @@ document.querySelectorAll('#caseTabs .tab-btn').forEach(btn=>{
   });
 });
 
+/* Infinite-loop track: [clone(last), real 0..n-1, clone(first)].
+   Track position 0 and n+1 are clones; real slide i lives at position i+1. */
+function buildCaseTrackHTML(c){
+  const total = c.images.length;
+  const slideHTML = (src, i, pos, isClone) => `<div class="carousel-slide${isClone ? ' clone' : ''}" data-pos="${pos}" data-idx="${i}"><img src="${src}" alt="${c.name} 案例照片 ${i+1}" loading="lazy"></div>`;
+  let html = '';
+  if(total > 1) html += slideHTML(c.images[total-1], total-1, 0, true);
+  html += c.images.map((src,i)=> slideHTML(src, i, i+1, false)).join('');
+  if(total > 1) html += slideHTML(c.images[0], 0, total+1, true);
+  return html;
+}
+
 function updateCaseCarousel(id){
-  const idx = caseImageIndex[id] || 0;
+  const c = CASE_BY_ID[id];
+  if(!c) return;
+  const total = c.images.length;
+  const pos = caseTrackPos[id] ?? 1;
+  const realIdx = ((pos - 1) % total + total) % total;
   const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
   const thumbs = caseSections.querySelector(`.carousel-thumbs[data-case="${id}"]`);
   if(!track || !thumbs) return;
-  [...track.children].forEach((slide,i)=> slide.classList.toggle('active', i===idx));
-  [...thumbs.children].forEach((t,i)=> t.classList.toggle('active', i===idx));
-  centerCaseCarousel(id);
-  const activeThumb = thumbs.children[idx];
+  [...track.children].forEach((slide,i)=> slide.classList.toggle('active', i===pos));
+  [...thumbs.children].forEach((t,i)=> t.classList.toggle('active', i===realIdx));
+  centerCaseCarousel(id, pos);
+  const activeThumb = thumbs.children[realIdx];
   if(activeThumb) activeThumb.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'});
 }
-function centerCaseCarousel(id){
+function centerCaseCarousel(id, pos){
   const track = caseSections.querySelector(`.carousel-track[data-case="${id}"]`);
   if(!track) return;
+  if(pos === undefined) pos = caseTrackPos[id] ?? 1;
   const viewport = track.parentElement;
-  const activeSlide = track.children[caseImageIndex[id] || 0];
+  const activeSlide = track.children[pos];
   if(!activeSlide || !viewport) return;
   const tx = viewport.clientWidth/2 - (activeSlide.offsetLeft + activeSlide.offsetWidth/2);
   track.style.transform = 'translateX(' + tx + 'px)';
+}
+function goToTrackPos(id, pos){
+  const c = CASE_BY_ID[id];
+  if(!c) return;
+  const total = c.images.length;
+  caseTrackPos[id] = pos;
+  casePendingSnap[id] = (pos === 0) ? total : (pos === total+1) ? 1 : null;
+  updateCaseCarousel(id);
 }
 function setCaseImage(id, idx){
   const c = CASE_BY_ID[id];
   if(!c) return;
   const total = c.images.length;
-  caseImageIndex[id] = ((idx % total) + total) % total;
+  const real = ((idx % total) + total) % total;
+  casePendingSnap[id] = null;
+  caseTrackPos[id] = real + 1;
   updateCaseCarousel(id);
 }
 function stepCaseImage(id, dir){
   const c = CASE_BY_ID[id];
   if(!c || c.images.length < 2) return;
-  setCaseImage(id, (caseImageIndex[id] || 0) + dir);
+  goToTrackPos(id, (caseTrackPos[id] ?? 1) + dir);
 }
 caseSections.addEventListener('click', e=>{
   const prevBtn = e.target.closest('.carousel-nav.pm-nav-prev');
@@ -956,7 +983,9 @@ caseSections.addEventListener('click', e=>{
   const slide = e.target.closest('.carousel-slide');
   if(slide){
     const track = slide.closest('.carousel-track');
-    setCaseImage(track.dataset.case, parseInt(slide.dataset.idx,10));
+    const id = track.dataset.case;
+    const pos = parseInt(slide.dataset.pos,10);
+    if(pos !== (caseTrackPos[id] ?? 1)) goToTrackPos(id, pos);
     return;
   }
   const thumb = e.target.closest('.carousel-thumbs img');
@@ -966,8 +995,33 @@ caseSections.addEventListener('click', e=>{
     return;
   }
 });
+caseSections.addEventListener('transitionend', e=>{
+  if(!e.target.classList || !e.target.classList.contains('carousel-track') || e.propertyName !== 'transform') return;
+  const id = e.target.dataset.case;
+  const snapTo = casePendingSnap[id];
+  if(snapTo == null) return;
+  casePendingSnap[id] = null;
+  caseTrackPos[id] = snapTo;
+  const track = e.target;
+  track.style.transition = 'none';
+  updateCaseCarousel(id);
+  void track.offsetWidth;
+  track.style.transition = '';
+});
+/* auto-sized slides can change width once their image finishes loading (lazy-loaded
+   neighbours in particular), which shifts later siblings — recenter, without animating,
+   whenever any carousel image loads. 'load' doesn't bubble, so listen on the capture phase. */
+caseSections.addEventListener('load', e=>{
+  if(e.target.tagName !== 'IMG') return;
+  const track = e.target.closest('.carousel-track');
+  if(!track) return;
+  track.style.transition = 'none';
+  centerCaseCarousel(track.dataset.case);
+  void track.offsetWidth;
+  track.style.transition = '';
+}, true);
 window.addEventListener('resize', ()=>{
-  Object.keys(caseImageIndex).forEach(id=> centerCaseCarousel(id));
+  Object.keys(caseTrackPos).forEach(id=> centerCaseCarousel(id));
 });
 
 renderCaseSections();
