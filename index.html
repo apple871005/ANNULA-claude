@@ -359,7 +359,7 @@ ul{list-style:none;}
 .pc-tag{font-size:11px;font-weight:500;letter-spacing:.06em;color:var(--wood);display:flex;align-items:center;gap:5px;margin-bottom:8px;}
 .plant-card h4{font-size:18px;font-weight:700;}
 @media (max-width:640px){ .plant-card h4{font-size:16.5px;} }
-.plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:15.5px;margin-bottom:12px;display:block;}
+.plant-card .pc-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:15.5px;margin-bottom:12px;display:none;}
 .pc-meta{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;color:var(--ink-soft);border-top:1px solid var(--line);padding-top:12px;}
 .pc-meta .price{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;font-weight:700;font-size:17px;color:var(--ink);}
 @media (max-width:640px){
@@ -460,7 +460,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 @media (max-width:680px){.pm-body{padding:34px 30px 40px;}}
 .pm-tag{font-size:13px;font-weight:500;color:var(--wood);letter-spacing:.06em;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
 .pm-body h3{font-size:29px;font-weight:700;margin-bottom:2px;}
-.pm-body .pm-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:18px;margin-bottom:20px;display:block;}
+.pm-body .pm-en{font-family:'Italiana','Noto Sans TC',serif;font-style:normal;color:var(--ink-soft);font-size:18px;margin-bottom:20px;display:none;}
 .pm-price{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;font-size:32px;font-weight:700;margin-bottom:22px;}
 .pm-price span{font-size:12.5px;font-family:'Noto Sans TC';color:var(--ink-soft);font-weight:400;}
 .pm-care{margin-bottom:26px;}
@@ -1524,7 +1524,7 @@ document.getElementById('pmMinus').addEventListener('click', ()=>{ if(pmQty>1){p
 document.getElementById('pmPlus').addEventListener('click', ()=>{ if(pmQty<20){pmQty++; document.getElementById('pmQty').textContent=pmQty;} });
 document.getElementById('pmAdd').addEventListener('click', ()=>{
   if(!currentProduct) return;
-  addToCart({key:currentProduct.id, name:currentProduct.name, en:currentProduct.en, price:currentProduct.price, qty:pmQty, icon:currentProduct.icon, type:'plant'});
+  addToCart({key:currentProduct.id, name:currentProduct.name, price:currentProduct.price, qty:pmQty, icon:currentProduct.icon, type:'plant'});
   closeOverlay(productModal);
 });
 document.getElementById('pmClose').addEventListener('click', ()=> closeOverlay(productModal));
@@ -1653,7 +1653,7 @@ function renderCart(){
       <div class="ci-icon"><svg class="icon" viewBox="0 0 64 64"><use href="#${c.isCareIcon ? 'i-water':c.icon}"/></svg></div>
       <div class="ci-info">
         <h5>${c.name}</h5>
-        <div class="ci-sub">${c.en||''}</div>
+        ${c.en ? `<div class="ci-sub">${c.en}</div>` : ''}
         <div class="ci-row">
           <div class="ci-stepper">
             <button onclick="changeQty('${c.key}',-1)"><svg class="icon" viewBox="0 0 24 24"><use href="#i-minus"/></svg></button>
