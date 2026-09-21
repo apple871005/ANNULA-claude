@@ -212,7 +212,7 @@ ul{list-style:none;}
 .section-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:700;margin:16px 0 18px;letter-spacing:.01em;}
 .section-head p{color:var(--ink-soft);font-size:15.5px;max-width:46ch;margin:0 auto;}
 #products .section-head p{font-size:17px;}
-#rental .section-head p{font-size:17px;}
+#rental .section-head p{font-size:clamp(14.5px,3.7vw,17px);max-width:38ch;}
 .section-head.left{margin:0 0 56px;text-align:left;}
 .section-head.left p{margin:0;}
 .featured-title{font-family:'Italiana','Noto Sans TC',serif;font-weight:400;font-style:normal;letter-spacing:.01em;}
@@ -701,7 +701,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     <div class="section-head reveal">
       <p class="eyebrow" style="justify-content:center;">PLANT RENTAL</p>
       <h2>綠意空間訂閱</h2>
-      <p>我們提供全方位的植物規劃與專業維護，<br>為商業與辦公空間打造低維護、高質感的綠意環境。<br>您負責享受綠意，植栽的健康與美感交給我們。</p>
+      <p>我們提供全方位的植物規劃與專業維護，為商業與辦公空間打造低維護、高質感的綠意環境。您負責享受綠意，植栽的健康與美感交給我們。</p>
     </div>
 
     <div class="tabs reveal" id="rentalTabs">
@@ -768,8 +768,8 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
     <div class="tab-panel active" data-panel="build">
       <p style="text-align:center;font-size:17px;color:var(--ink-soft);max-width:520px;margin:0 auto 34px;">請選擇對應的光照環境，快速篩選出最適合你空間的植物夥伴。</p>
       <div class="filter-row">
-        <button class="filter-btn active" data-blight="sun">喜光耐曬型</button>
-        <button class="filter-btn" data-blight="semi">明亮散光型</button>
+        <button class="filter-btn" data-blight="sun">喜光耐曬型</button>
+        <button class="filter-btn active" data-blight="semi">明亮散光型</button>
         <button class="filter-btn" data-blight="shade">室內耐陰型</button>
       </div>
       <div class="light-desc" id="buildDesc"></div>
@@ -1430,7 +1430,7 @@ document.getElementById('viewAllBtn').addEventListener('click', ()=>{ showAllFea
 renderFeatured();
 
 /* ---- 自由搭配：依光照分類 (#rental build panel) ---- */
-let buildLight = 'sun';
+let buildLight = 'semi';
 function renderBuildGrid(){
   document.querySelectorAll('.tab-panel[data-panel="build"] .filter-btn').forEach(b=> b.classList.toggle('active', b.dataset.blight===buildLight));
   document.getElementById('buildDesc').innerHTML = BUILD_DESC[buildLight];
