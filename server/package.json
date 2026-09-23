@@ -1,0 +1,17 @@
+{
+  "name": "annula-ai-planner-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototype server for ANNULA's AI space-planning feature (upload a photo, get a plant recommendation + quote). Keeps the Gemini API key server-side.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^2.4.0"
+  }
+}

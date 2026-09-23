@@ -15,3 +15,10 @@
 ## 部署
 
 這是靜態網站，可直接部署到 GitHub Pages、Netlify、Vercel 等靜態主機服務。
+
+## AI 空間規劃小幫手（原型，開發中）
+
+`plan.html` 是一個實驗性功能：使用者上傳空間照片，取得建議植栽清單與報價試算。這個功能需要呼叫 Gemini API，因此需要一個小型 Node 伺服器來保護 API 金鑰（金鑰不可出現在瀏覽器端）。
+
+- 目前為 stub 階段，尚未串接真實 Gemini API，也尚未加進主要導覽列。
+- 詳見 [`server/README.md`](server/README.md) 了解如何本機啟動、以及之後如何接上真正的 API 金鑰。

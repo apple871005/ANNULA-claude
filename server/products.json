@@ -1,0 +1,18 @@
+[
+  {"id":"spathiphyllum-rental","name":"白鶴芋","en":"Spathiphyllum spp","light":"semi","height":"60–80cm","price":600,"priceUnit":"月","image":"plant-rental/Spathiphyllum spp-01.jpeg"},
+  {"id":"bipennifolium-rental","name":"小提琴蔓綠絨","en":"Philodendron Bipennifolium","light":"semi","height":"60–80cm","price":600,"priceUnit":"月","image":"plant-rental/Philodendron bipennifolium-01.jpeg"},
+  {"id":"heliotrope-rental","name":"白水木","en":"Tournefortia Argentea","light":"sun","height":"180–230cm","price":1200,"priceUnit":"月","image":"plant-rental/Tournefortia argentea-01.jpeg"},
+  {"id":"altissima-gold-rental","name":"斑葉富貴榕","en":"Ficus Altissima 'Golden Edged'","light":"sun","lightExtra":["semi"],"height":"180–230cm","price":1200,"priceUnit":"月","image":"plant-rental/Ficus altissima 'Golden Edged'-01.jpeg"},
+  {"id":"monstera-rental","name":"龜背芋","en":"Monstera Deliciosa","light":"semi","lightExtra":["shade"],"height":"60–80cm","price":600,"priceUnit":"月","image":"plant-rental/Monstera deliciosa-01.jpeg"},
+  {"id":"licuala-rental","name":"圓葉刺軸櫚","en":"Licuala Grandis","light":"semi","lightExtra":["shade"],"height":"60–100cm","price":600,"priceUnit":"月","image":"plant-rental/Licuala grandis-01.jpeg"},
+  {"id":"plerandra-rental","name":"孔雀木","en":"Plerandra Elegantissima","light":"semi","height":"180–230cm","price":1200,"priceUnit":"月","image":"plant-rental/Plerandra elegantissima-01.jpeg"},
+  {"id":"umbellata-rental","name":"愛心榕","en":"Ficus Umbellata","light":"semi","height":"80–100cm","price":600,"priceUnit":"月","image":"plant-rental/Ficus umbellata-01.jpeg"},
+  {"id":"elastica-rental","name":"印度橡膠樹","en":"Ficus Elastica Roxb.","light":"semi","lightExtra":["shade"],"height":"80–120cm","price":600,"priceUnit":"月","image":"plant-rental/Ficus elastica Roxb.-01.jpeg"},
+  {"id":"trifasciata-rental","name":"金邊虎尾蘭","en":"Dracaena Trifasciata 'Laurentii'","light":"semi","lightExtra":["shade","sun"],"height":"80–120cm","price":600,"priceUnit":"月","image":"plant-rental/Dracaena trifasciata 'Laurentii'-01.jpeg"},
+  {"id":"strelitzia-rental","name":"天堂鳥","en":"Strelitzia Reginae","light":"semi","height":"120–160cm","price":800,"priceUnit":"月","image":"plant-rental/Strelitzia reginae-01.jpeg"},
+  {"id":"leucophyllum-rental","name":"紅花玉芙蓉","en":"Leucophyllum Frutescens","light":"sun","height":"120–160cm","price":800,"priceUnit":"月","image":"plant-rental/Leucophyllum frutescens-01.jpeg"},
+  {"id":"ravenala-rental","name":"旅人蕉","en":"Ravenala Madagascariensis Sonn","light":"semi","height":"180–230cm","price":1200,"priceUnit":"月","image":"plant-rental/Ravenala madagascariensis Sonn-01.jpeg"},
+  {"id":"peperomia-rental","name":"圓葉椒草","en":"Peperomia Obtusifolia (L.) A.Dietr.","light":"semi","lightExtra":["shade"],"height":"40–50cm","price":400,"priceUnit":"月","image":"plant-rental/Peperomia obtusifolia (L.) A.Dietr.-01.jpeg"},
+  {"id":"ficus-lyrata-rental","name":"琴葉榕","en":"Ficus Lyrata","light":"semi","lightExtra":["shade"],"height":"80–120cm","price":600,"priceUnit":"月","image":"plant-rental/Ficus lyrata-01.jpeg"},
+  {"id":"coccoloba-rental","name":"海葡萄","en":"Coccoloba Uvifera (L.) L.","light":"sun","lightExtra":["semi"],"height":"160–200cm","price":1200,"priceUnit":"月","image":"plant-rental/Coccoloba uvifera (L.) L.-01.jpeg"}
+]
