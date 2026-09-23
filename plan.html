@@ -915,11 +915,18 @@ document.getElementById('planAgainBtn').addEventListener('click', ()=>{
   window.scrollTo({top: planUploadBox.getBoundingClientRect().top + window.scrollY - 100, behavior:'smooth'});
 });
 
+const MOCKUP_BADGE_TEXT = {
+  composite: '植栽合成預覽（將建議植栽疊加於照片，非 AI 生成影像）',
+  ai: 'AI 視覺化預覽',
+  original: '模擬預覽（尚未生成合成圖）',
+};
+
 function renderResult(data){
   document.getElementById('planMockupImg').src = data.mockupImage;
-  document.getElementById('planMockupBadge').textContent = data.isPlaceholderImage
-    ? (data.mockupError || '模擬預覽（尚未串接真實 AI 圖像生成）')
-    : 'AI 視覺化預覽';
+  document.getElementById('planMockupBadge').textContent =
+    data.mockupError || MOCKUP_BADGE_TEXT[data.mockupMethod] || (data.isPlaceholderImage
+      ? '模擬預覽（尚未生成合成圖）'
+      : 'AI 視覺化預覽');
   document.getElementById('planSummary').textContent = data.summary || '';
 
   const grid = document.getElementById('planGrid');

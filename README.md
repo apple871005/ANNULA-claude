@@ -20,5 +20,6 @@
 
 `plan.html` 是一個實驗性功能：使用者上傳空間照片，取得建議植栽清單與報價試算。這個功能需要呼叫 Gemini API，因此需要一個小型 Node 伺服器來保護 API 金鑰（金鑰不可出現在瀏覽器端）。
 
-- 目前為 stub 階段，尚未串接真實 Gemini API，也尚未加進主要導覽列。
-- 詳見 [`server/README.md`](server/README.md) 了解如何本機啟動、以及之後如何接上真正的 API 金鑰。
+- 植栽分析與報價已串接真實 Gemini API；合成預覽圖改用本機去背 PNG 疊圖（不需 AI 圖像 API 的帳單額度，永久免費）。
+- 尚未加進主要導覽列，只能透過網址直接開啟。
+- 詳見 [`server/README.md`](server/README.md) 了解如何本機啟動。

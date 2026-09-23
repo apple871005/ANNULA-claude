@@ -2,6 +2,9 @@
 'use strict';
 
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
 const PRODUCTS = require('./products.json');
 
 const LIGHT_KEYS = ['sun', 'semi', 'shade'];
@@ -13,7 +16,8 @@ const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 // "gemini-2.5-flash" / "gemini-flash-latest" were unavailable/overloaded for this key.
 // If Google retires this model name later, swap it here (and only here).
 const ANALYZE_MODEL = process.env.GEMINI_ANALYZE_MODEL || 'gemini-3.5-flash';
-const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+
+const CUTOUT_DIR = path.join(__dirname, 'assets', 'plant-cutouts');
 
 function seededRandom(seed) {
   let t = seed >>> 0;
@@ -160,48 +164,91 @@ async function analyzeSpace(imageBuffer, mimeType) {
 }
 
 /**
- * Generate a "what it could look like" mockup image with the recommended plants
- * composited into the uploaded photo, via Gemini's image model.
+ * Generate a "what it could look like" mockup image by compositing pre-cut, transparent
+ * PNGs of the recommended plants (background-removed from our own catalog photos, see
+ * server/assets/plant-cutouts/ and the generation script noted in server/README.md) onto
+ * the uploaded photo.
  *
- * Note: image-generation models require a billing-enabled Google AI Studio / Cloud
- * project -- the free tier has a hard 0 quota for them. If the call fails for any
- * reason (quota, safety filter, model unavailable), this falls back to echoing the
- * original photo back with isPlaceholderImage:true, so the feature degrades instead
- * of breaking the page.
+ * This intentionally does NOT call an external image-generation API: Gemini's image
+ * models need a billing-enabled Google AI Studio project (confirmed via live testing --
+ * the free tier has a hard 0 quota for them), and paid alternatives (Stability AI,
+ * Fal.ai, ...) all need a new account + key too. Local compositing needs neither, is
+ * free forever, and never rate-limits. It's a rough "collage" placement, not a
+ * perspective-matched AI edit -- the frontend badge says so explicitly.
  *
  * @param {Buffer} imageBuffer
  * @param {string} mimeType
  * @param {Array} recommendations
+ * @returns {Promise<{mockupImage:string, isPlaceholderImage:boolean, mockupMethod:string, mockupError?:string}>}
  */
 async function generateMockupImage(imageBuffer, mimeType, recommendations) {
-  const plantList = recommendations.map((r) => `${r.name} x${r.qty}`).join('、');
-  const prompt =
-    `請在這張照片中，自然地加入以下植栽，維持原本的空間透視、光線與構圖，只新增植栽本身，` +
-    `不要改變照片中其他物件或背景：${plantList}`;
-
   try {
-    const candidate = await callGemini(IMAGE_MODEL, [
-      { inline_data: { mime_type: mimeType, data: imageBuffer.toString('base64') } },
-      { text: prompt },
-    ]);
-    const imagePart = (candidate.content.parts || []).find((p) => p.inlineData || p.inline_data);
-    if (!imagePart) {
-      throw new Error('Gemini 未回傳圖片（可能為文字回覆或被安全性過濾）');
+    const seed = hashBufferToSeed(imageBuffer);
+    const rand = seededRandom(seed);
+
+    const base = sharp(imageBuffer).rotate(); // auto-orient using EXIF before we read pixel dimensions
+    const meta = await base.metadata();
+    const W = meta.width;
+    const H = meta.height;
+    if (!W || !H) throw new Error('無法讀取照片尺寸');
+
+    const items = (recommendations || [])
+      .filter((r) => fs.existsSync(path.join(CUTOUT_DIR, `${r.id}.png`)))
+      .slice(0, 4);
+
+    if (items.length === 0) {
+      return {
+        mockupImage: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
+        isPlaceholderImage: true,
+        mockupMethod: 'original',
+        mockupError: '沒有可用的植栽合成素材，顯示原始照片。',
+      };
     }
-    const inline = imagePart.inlineData || imagePart.inline_data;
-    const outMime = inline.mimeType || inline.mime_type || 'image/png';
+
+    const margin = W * 0.05;
+    const usableWidth = W - margin * 2;
+    const slotWidth = usableWidth / items.length;
+
+    const layers = [];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const cutoutPath = path.join(CUTOUT_DIR, `${item.id}.png`);
+      const cutoutMeta = await sharp(cutoutPath).metadata();
+      const aspect = cutoutMeta.width / cutoutMeta.height;
+
+      // vary height a bit per slot (and with the photo's own seed) for a less mechanical layout
+      const heightFrac = 0.3 + ((i % 3) * 0.045) + (rand() - 0.5) * 0.03;
+      let targetH = Math.round(H * heightFrac);
+      let targetW = Math.round(targetH * aspect);
+      if (targetW > slotWidth * 0.92) {
+        targetW = Math.round(slotWidth * 0.92);
+        targetH = Math.round(targetW / aspect);
+      }
+      if (targetW < 1 || targetH < 1) continue;
+
+      const resized = await sharp(cutoutPath).resize(targetW, targetH).toBuffer();
+      const jitter = (rand() - 0.5) * slotWidth * 0.15;
+      const slotCenterX = margin + slotWidth * (i + 0.5) + jitter;
+      const left = Math.round(Math.max(0, Math.min(slotCenterX - targetW / 2, W - targetW)));
+      const top = Math.round(Math.max(0, H * 0.95 - targetH));
+
+      layers.push({ input: resized, left, top });
+    }
+
+    const outputBuffer = await base.composite(layers).jpeg({ quality: 88 }).toBuffer();
+
     return {
-      mockupImage: `data:${outMime};base64,${inline.data}`,
+      mockupImage: `data:image/jpeg;base64,${outputBuffer.toString('base64')}`,
       isPlaceholderImage: false,
+      mockupMethod: 'composite',
     };
   } catch (err) {
-    console.error('[generateMockupImage] Gemini call failed, falling back to original photo:', err.message);
+    console.error('[generateMockupImage] local compositing failed, falling back to original photo:', err.message);
     return {
       mockupImage: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
       isPlaceholderImage: true,
-      mockupError: err.geminiStatus === 'RESOURCE_EXHAUSTED'
-        ? 'AI 圖像生成目前需要已啟用帳單的 Google AI Studio 專案（免費額度為 0），因此暫時顯示原始照片。'
-        : 'AI 圖像生成暫時無法使用，顯示原始照片。',
+      mockupMethod: 'original',
+      mockupError: '植栽合成暫時無法使用，顯示原始照片。',
     };
   }
 }
