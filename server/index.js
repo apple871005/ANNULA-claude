@@ -6,7 +6,7 @@ const path = require('path');
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
-const { analyzeSpace, generateMockupImage } = require('./geminiService');
+const { analyzeSpace, buildPlacementLayout } = require('./geminiService');
 
 const app = express();
 const upload = multer({
@@ -27,6 +27,10 @@ app.use(cors());
 const SITE_ROOT = path.join(__dirname, '..');
 app.use(express.static(SITE_ROOT));
 
+// Plant cutout PNGs (server/assets/plant-cutouts/) live outside SITE_ROOT, so they need
+// their own static route -- plan.html's drag-and-drop layer loads them directly as <img src>.
+app.use('/plant-cutouts', express.static(path.join(__dirname, 'assets', 'plant-cutouts')));
+
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, hasApiKey: Boolean(process.env.GEMINI_API_KEY) });
 });
@@ -37,8 +41,8 @@ app.post('/api/plan', upload.single('photo'), async (req, res) => {
   }
   try {
     const analysis = await analyzeSpace(req.file.buffer, req.file.mimetype);
-    const mockup = await generateMockupImage(req.file.buffer, req.file.mimetype, analysis.recommendations);
-    res.json({ ...analysis, ...mockup });
+    const layout = buildPlacementLayout(req.file.buffer, analysis.recommendations);
+    res.json({ ...analysis, recommendations: layout.recommendations, placementZone: layout.zone });
   } catch (err) {
     console.error('[/api/plan] failed:', err);
     res.status(500).json({ error: '分析失敗，請稍後再試' });
@@ -59,7 +63,7 @@ app.listen(PORT, () => {
   console.log(`  -> try it at http://localhost:${PORT}/plan.html`);
   console.log(
     process.env.GEMINI_API_KEY
-      ? '  -> GEMINI_API_KEY detected (still using stubbed logic until geminiService.js is wired up)'
-      : '  -> no GEMINI_API_KEY set — running fully on mock data, that is expected for now'
+      ? '  -> GEMINI_API_KEY detected, plant analysis will call the real Gemini API'
+      : '  -> no GEMINI_API_KEY set — plant analysis will fall back to catalog-based mock picks'
   );
 });

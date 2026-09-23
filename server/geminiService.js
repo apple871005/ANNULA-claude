@@ -4,7 +4,6 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const sharp = require('sharp');
 const PRODUCTS = require('./products.json');
 
 const LIGHT_KEYS = ['sun', 'semi', 'shade'];
@@ -163,94 +162,51 @@ async function analyzeSpace(imageBuffer, mimeType) {
   };
 }
 
+// Default placement zone for plant cutouts, expressed as a percentage box within the
+// uploaded photo (0-100). We have no real window/floor detection, so this is a heuristic
+// stand-in for "the ground area near the window": a centered horizontal band (avoids the
+// far edges, where photos are more likely to show walls/corners than open floor) and a
+// lower-but-not-bottom-most vertical band (reads as "on the ground" without risking being
+// cropped by the very edge of the photo). Positions here are only the STARTING point --
+// the frontend lets the user drag each plant anywhere afterwards.
+const PLACEMENT_ZONE = { xMin: 24, xMax: 76, yMin: 60, yMax: 84 };
+
 /**
- * Generate a "what it could look like" mockup image by compositing pre-cut, transparent
- * PNGs of the recommended plants (background-removed from our own catalog photos, see
- * server/assets/plant-cutouts/ and the generation script noted in server/README.md) onto
- * the uploaded photo.
+ * Build the starting drag-and-drop layout for the recommended plants: which cutout image
+ * to show for each, and a default x/y/width (all percentages of the photo) inside
+ * PLACEMENT_ZONE. Compositing itself now happens client-side (plan.html positions each
+ * cutout <img> over the uploaded photo and lets the user drag them), so this function does
+ * no image processing at all -- just math -- and needs no external API or image library.
  *
- * This intentionally does NOT call an external image-generation API: Gemini's image
- * models need a billing-enabled Google AI Studio project (confirmed via live testing --
- * the free tier has a hard 0 quota for them), and paid alternatives (Stability AI,
- * Fal.ai, ...) all need a new account + key too. Local compositing needs neither, is
- * free forever, and never rate-limits. It's a rough "collage" placement, not a
- * perspective-matched AI edit -- the frontend badge says so explicitly.
- *
- * @param {Buffer} imageBuffer
- * @param {string} mimeType
- * @param {Array} recommendations
- * @returns {Promise<{mockupImage:string, isPlaceholderImage:boolean, mockupMethod:string, mockupError?:string}>}
+ * @param {Buffer} imageBuffer used only to seed deterministic placement (same photo -> same layout)
+ * @param {Array} recommendations from analyzeSpace()
+ * @returns {{ zone: object, recommendations: Array }} recommendations with placement fields added
  */
-async function generateMockupImage(imageBuffer, mimeType, recommendations) {
-  try {
-    const seed = hashBufferToSeed(imageBuffer);
-    const rand = seededRandom(seed);
+function buildPlacementLayout(imageBuffer, recommendations) {
+  const rand = seededRandom(hashBufferToSeed(imageBuffer));
 
-    const base = sharp(imageBuffer).rotate(); // auto-orient using EXIF before we read pixel dimensions
-    const meta = await base.metadata();
-    const W = meta.width;
-    const H = meta.height;
-    if (!W || !H) throw new Error('無法讀取照片尺寸');
+  const items = (recommendations || []).slice(0, 4);
+  const n = items.length;
+  const zoneWidth = PLACEMENT_ZONE.xMax - PLACEMENT_ZONE.xMin;
 
-    const items = (recommendations || [])
-      .filter((r) => fs.existsSync(path.join(CUTOUT_DIR, `${r.id}.png`)))
-      .slice(0, 4);
-
-    if (items.length === 0) {
-      return {
-        mockupImage: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
-        isPlaceholderImage: true,
-        mockupMethod: 'original',
-        mockupError: '沒有可用的植栽合成素材，顯示原始照片。',
-      };
-    }
-
-    const margin = W * 0.05;
-    const usableWidth = W - margin * 2;
-    const slotWidth = usableWidth / items.length;
-
-    const layers = [];
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      const cutoutPath = path.join(CUTOUT_DIR, `${item.id}.png`);
-      const cutoutMeta = await sharp(cutoutPath).metadata();
-      const aspect = cutoutMeta.width / cutoutMeta.height;
-
-      // vary height a bit per slot (and with the photo's own seed) for a less mechanical layout
-      const heightFrac = 0.3 + ((i % 3) * 0.045) + (rand() - 0.5) * 0.03;
-      let targetH = Math.round(H * heightFrac);
-      let targetW = Math.round(targetH * aspect);
-      if (targetW > slotWidth * 0.92) {
-        targetW = Math.round(slotWidth * 0.92);
-        targetH = Math.round(targetW / aspect);
-      }
-      if (targetW < 1 || targetH < 1) continue;
-
-      const resized = await sharp(cutoutPath).resize(targetW, targetH).toBuffer();
-      const jitter = (rand() - 0.5) * slotWidth * 0.15;
-      const slotCenterX = margin + slotWidth * (i + 0.5) + jitter;
-      const left = Math.round(Math.max(0, Math.min(slotCenterX - targetW / 2, W - targetW)));
-      const top = Math.round(Math.max(0, H * 0.95 - targetH));
-
-      layers.push({ input: resized, left, top });
-    }
-
-    const outputBuffer = await base.composite(layers).jpeg({ quality: 88 }).toBuffer();
+  const withPlacement = items.map((item, i) => {
+    const hasCutout = fs.existsSync(path.join(CUTOUT_DIR, `${item.id}.png`));
+    const slotCenterX = PLACEMENT_ZONE.xMin + (zoneWidth * (i + 0.5)) / n;
+    const jitterX = (rand() - 0.5) * (zoneWidth / n) * 0.3;
+    const defaultXPct = Math.max(PLACEMENT_ZONE.xMin, Math.min(PLACEMENT_ZONE.xMax, slotCenterX + jitterX));
+    const defaultYPct = PLACEMENT_ZONE.yMin + rand() * (PLACEMENT_ZONE.yMax - PLACEMENT_ZONE.yMin);
+    const defaultWidthPct = 14 + (i % 3) * 2.5 + (rand() - 0.5) * 2; // 12-19% of photo width, varied
 
     return {
-      mockupImage: `data:image/jpeg;base64,${outputBuffer.toString('base64')}`,
-      isPlaceholderImage: false,
-      mockupMethod: 'composite',
+      ...item,
+      cutoutImage: hasCutout ? `/plant-cutouts/${item.id}.png` : null,
+      defaultXPct: Number(defaultXPct.toFixed(2)),
+      defaultYPct: Number(defaultYPct.toFixed(2)),
+      defaultWidthPct: Number(defaultWidthPct.toFixed(2)),
     };
-  } catch (err) {
-    console.error('[generateMockupImage] local compositing failed, falling back to original photo:', err.message);
-    return {
-      mockupImage: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
-      isPlaceholderImage: true,
-      mockupMethod: 'original',
-      mockupError: '植栽合成暫時無法使用，顯示原始照片。',
-    };
-  }
+  });
+
+  return { zone: PLACEMENT_ZONE, recommendations: withPlacement };
 }
 
-module.exports = { analyzeSpace, generateMockupImage };
+module.exports = { analyzeSpace, buildPlacementLayout };

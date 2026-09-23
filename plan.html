@@ -622,9 +622,18 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 
 .plan-result{display:none;margin-top:48px;}
 .plan-result.show{display:block;}
-.plan-mockup{position:relative;border-radius:var(--r-lg);overflow:hidden;margin-bottom:28px;background:var(--bg-card);}
-.plan-mockup img{width:100%;display:block;max-height:520px;object-fit:contain;}
-.plan-mockup-badge{position:absolute;top:16px;left:16px;right:16px;width:fit-content;max-width:calc(100% - 32px);background:rgba(43,48,44,.8);color:#fff;font-size:12px;line-height:1.5;letter-spacing:.03em;padding:7px 13px;border-radius:var(--r-md);backdrop-filter:blur(4px);}
+.plan-mockup-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:14px;}
+.plan-mockup{position:relative;border-radius:var(--r-lg);overflow:hidden;background:var(--bg-card);max-width:100%;touch-action:none;}
+.plan-mockup-photo{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;pointer-events:none;user-select:none;}
+.plan-drag-layer{position:absolute;inset:0;}
+.plan-drag-plant{position:absolute;width:16%;transform:translate(-50%,-100%);cursor:grab;touch-action:none;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25));transition:filter .2s;}
+.plan-drag-plant:hover{filter:drop-shadow(0 8px 14px rgba(0,0,0,.3));}
+.plan-drag-plant.dragging{cursor:grabbing;z-index:50;filter:drop-shadow(0 10px 18px rgba(0,0,0,.35));}
+.plan-mockup-badge{position:absolute;top:16px;left:16px;right:16px;width:fit-content;max-width:calc(100% - 32px);background:rgba(43,48,44,.8);color:#fff;font-size:12px;line-height:1.5;letter-spacing:.03em;padding:7px 13px;border-radius:var(--r-md);backdrop-filter:blur(4px);pointer-events:none;}
+.plan-mockup-toolbar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:14px;padding:0 4px;}
+.plan-mockup-hint{font-size:12.5px;color:var(--ink-soft);}
+.plan-mockup-reset-btn{font-size:12.5px;color:var(--accent);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 14px;background:transparent;transition:background .25s,border-color .25s;}
+.plan-mockup-reset-btn:hover{background:rgba(74,93,78,.08);border-color:var(--accent);}
 .plan-summary{color:var(--ink-soft);font-size:14.5px;line-height:1.75;margin-bottom:30px;padding:18px 20px;background:var(--bg-card);border-radius:var(--r-md);border-left:3px solid var(--accent);}
 .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-bottom:30px;}
 .plan-item{background:var(--bg-card);border-radius:var(--r-md);overflow:hidden;}
@@ -747,9 +756,16 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
   </div>
 
   <div class="plan-result" id="planResult">
-    <div class="plan-mockup">
-      <img id="planMockupImg" alt="空間模擬預覽">
-      <span class="plan-mockup-badge" id="planMockupBadge">模擬預覽（尚未串接真實 AI 圖像生成）</span>
+    <div class="plan-mockup-wrap">
+      <div class="plan-mockup" id="planMockup">
+        <img class="plan-mockup-photo" id="planMockupPhoto" alt="您上傳的空間照片">
+        <div class="plan-drag-layer" id="planDragLayer"></div>
+        <span class="plan-mockup-badge" id="planMockupBadge">拖曳植栽圖示，調整到窗邊或喜歡的位置</span>
+      </div>
+      <div class="plan-mockup-toolbar">
+        <span class="plan-mockup-hint">🖐 可直接拖曳植栽調整擺放位置</span>
+        <button type="button" class="plan-mockup-reset-btn" id="planMockupResetBtn">重設擺放位置</button>
+      </div>
     </div>
     <p class="plan-summary" id="planSummary"></p>
     <div class="plan-grid" id="planGrid"></div>
@@ -829,6 +845,7 @@ const planResult = document.getElementById('planResult');
 const planUploadBox = document.querySelector('.plan-upload');
 
 let selectedFile = null;
+let uploadedPhotoURL = null;
 
 function showError(msg){
   planError.textContent = msg;
@@ -851,8 +868,9 @@ function setFile(file){
   }
   clearError();
   selectedFile = file;
-  const url = URL.createObjectURL(file);
-  planPreviewImg.src = url;
+  if(uploadedPhotoURL) URL.revokeObjectURL(uploadedPhotoURL);
+  uploadedPhotoURL = URL.createObjectURL(file);
+  planPreviewImg.src = uploadedPhotoURL;
   planFilename.textContent = file.name;
   planPreview.classList.add('show');
   planAnalyzeBtn.disabled = false;
@@ -915,18 +933,102 @@ document.getElementById('planAgainBtn').addEventListener('click', ()=>{
   window.scrollTo({top: planUploadBox.getBoundingClientRect().top + window.scrollY - 100, behavior:'smooth'});
 });
 
-const MOCKUP_BADGE_TEXT = {
-  composite: '植栽合成預覽（將建議植栽疊加於照片，非 AI 生成影像）',
-  ai: 'AI 視覺化預覽',
-  original: '模擬預覽（尚未生成合成圖）',
-};
+const planMockup = document.getElementById('planMockup');
+const planMockupPhoto = document.getElementById('planMockupPhoto');
+const planDragLayer = document.getElementById('planDragLayer');
+const planMockupResetBtn = document.getElementById('planMockupResetBtn');
+
+let currentPlacements = []; // [{id, cutoutImage, defaultXPct, defaultYPct, defaultWidthPct}]
+
+/* size the mockup stage in pixels to exactly match the uploaded photo's own aspect ratio,
+   so the drag layer's percentage-based positions line up 1:1 with the visible photo --
+   otherwise object-fit letterboxing would make "80% down" land in empty space instead of
+   on the photo itself. */
+function sizeMockupStage(){
+  const natW = planMockupPhoto.naturalWidth;
+  const natH = planMockupPhoto.naturalHeight;
+  if(!natW || !natH) return;
+  const wrap = planMockup.parentElement;
+  const maxW = Math.min(wrap.clientWidth || 860, 860);
+  const maxH = window.innerHeight * 0.62;
+  let w = maxW, h = (w * natH) / natW;
+  if(h > maxH){ h = maxH; w = (h * natW) / natH; }
+  planMockup.style.width = Math.round(w) + 'px';
+  planMockup.style.height = Math.round(h) + 'px';
+}
+window.addEventListener('resize', ()=>{
+  clearTimeout(window._planResizeT);
+  window._planResizeT = setTimeout(sizeMockupStage, 150);
+});
+
+function makeDraggable(el){
+  let dragging = false, startX = 0, startY = 0, origLeft = 0, origTop = 0, stageRect = null;
+
+  function pointerDown(e){
+    dragging = true;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+    stageRect = planMockup.getBoundingClientRect();
+    startX = e.clientX;
+    startY = e.clientY;
+    origLeft = parseFloat(el.style.left);
+    origTop = parseFloat(el.style.top);
+  }
+  function pointerMove(e){
+    if(!dragging || !stageRect) return;
+    const dxPct = ((e.clientX - startX) / stageRect.width) * 100;
+    const dyPct = ((e.clientY - startY) / stageRect.height) * 100;
+    const newLeft = Math.max(2, Math.min(98, origLeft + dxPct));
+    const newTop = Math.max(6, Math.min(99, origTop + dyPct));
+    el.style.left = newLeft + '%';
+    el.style.top = newTop + '%';
+  }
+  function pointerUp(e){
+    if(!dragging) return;
+    dragging = false;
+    el.classList.remove('dragging');
+  }
+  el.addEventListener('pointerdown', pointerDown);
+  el.addEventListener('pointermove', pointerMove);
+  el.addEventListener('pointerup', pointerUp);
+  el.addEventListener('pointercancel', pointerUp);
+}
+
+function renderDragLayer(){
+  planDragLayer.innerHTML = '';
+  currentPlacements.forEach(p=>{
+    if(!p.cutoutImage) return;
+    const img = document.createElement('img');
+    img.className = 'plan-drag-plant';
+    img.src = p.cutoutImage;
+    img.alt = p.name;
+    img.draggable = false;
+    img.style.left = p.defaultXPct + '%';
+    img.style.top = p.defaultYPct + '%';
+    img.style.width = p.defaultWidthPct + '%';
+    img.dataset.id = p.id;
+    makeDraggable(img);
+    planDragLayer.appendChild(img);
+  });
+}
+
+planMockupResetBtn.addEventListener('click', ()=>{
+  planDragLayer.querySelectorAll('.plan-drag-plant').forEach(el=>{
+    const p = currentPlacements.find(pp => pp.id === el.dataset.id);
+    if(!p) return;
+    el.style.left = p.defaultXPct + '%';
+    el.style.top = p.defaultYPct + '%';
+  });
+});
 
 function renderResult(data){
-  document.getElementById('planMockupImg').src = data.mockupImage;
-  document.getElementById('planMockupBadge').textContent =
-    data.mockupError || MOCKUP_BADGE_TEXT[data.mockupMethod] || (data.isPlaceholderImage
-      ? '模擬預覽（尚未生成合成圖）'
-      : 'AI 視覺化預覽');
+  currentPlacements = data.recommendations || [];
+
+  planMockupPhoto.onload = sizeMockupStage;
+  planMockupPhoto.src = uploadedPhotoURL;
+  if(planMockupPhoto.complete) sizeMockupStage();
+
+  renderDragLayer();
   document.getElementById('planSummary').textContent = data.summary || '';
 
   const grid = document.getElementById('planGrid');
