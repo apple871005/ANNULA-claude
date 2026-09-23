@@ -624,7 +624,7 @@ footer{background:var(--bg-deep);color:rgba(239,234,224,.75);padding:90px 0 30px
 .plan-result.show{display:block;}
 .plan-mockup{position:relative;border-radius:var(--r-lg);overflow:hidden;margin-bottom:28px;background:var(--bg-card);}
 .plan-mockup img{width:100%;display:block;max-height:520px;object-fit:contain;}
-.plan-mockup-badge{position:absolute;top:16px;left:16px;background:rgba(43,48,44,.8);color:#fff;font-size:12px;letter-spacing:.03em;padding:7px 13px;border-radius:var(--r-full);backdrop-filter:blur(4px);}
+.plan-mockup-badge{position:absolute;top:16px;left:16px;right:16px;width:fit-content;max-width:calc(100% - 32px);background:rgba(43,48,44,.8);color:#fff;font-size:12px;line-height:1.5;letter-spacing:.03em;padding:7px 13px;border-radius:var(--r-md);backdrop-filter:blur(4px);}
 .plan-summary{color:var(--ink-soft);font-size:14.5px;line-height:1.75;margin-bottom:30px;padding:18px 20px;background:var(--bg-card);border-radius:var(--r-md);border-left:3px solid var(--accent);}
 .plan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-bottom:30px;}
 .plan-item{background:var(--bg-card);border-radius:var(--r-md);overflow:hidden;}
@@ -918,7 +918,7 @@ document.getElementById('planAgainBtn').addEventListener('click', ()=>{
 function renderResult(data){
   document.getElementById('planMockupImg').src = data.mockupImage;
   document.getElementById('planMockupBadge').textContent = data.isPlaceholderImage
-    ? '模擬預覽（尚未串接真實 AI 圖像生成）'
+    ? (data.mockupError || '模擬預覽（尚未串接真實 AI 圖像生成）')
     : 'AI 視覺化預覽';
   document.getElementById('planSummary').textContent = data.summary || '';
 

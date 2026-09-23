@@ -1,10 +1,4 @@
-// AI space-planning service.
-//
-// This is currently STUBBED — no real Gemini API calls are made yet, so it works without
-// a GEMINI_API_KEY. The two functions below are the exact seams to fill in once a key is
-// available; everything calling into this module (server/index.js) already expects their
-// real return shape, so swapping the stub body for a real fetch() should not require
-// touching index.html or plan.html.
+// AI space-planning service — real Gemini integration.
 'use strict';
 
 const crypto = require('crypto');
@@ -12,10 +6,16 @@ const PRODUCTS = require('./products.json');
 
 const LIGHT_KEYS = ['sun', 'semi', 'shade'];
 const LIGHT_LABEL = { sun: '喜光耐曬型', semi: '明亮散光型', shade: '室內耐陰型' };
+const PRODUCTS_BY_ID = Object.fromEntries(PRODUCTS.map((p) => [p.id, p]));
+
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+// Confirmed working against this project's key at build time (2026-09-23) --
+// "gemini-2.5-flash" / "gemini-flash-latest" were unavailable/overloaded for this key.
+// If Google retires this model name later, swap it here (and only here).
+const ANALYZE_MODEL = process.env.GEMINI_ANALYZE_MODEL || 'gemini-3.5-flash';
+const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
 
 function seededRandom(seed) {
-  // Small deterministic PRNG (mulberry32) so the same photo gives a stable-ish result
-  // instead of a different plant list on every retry.
   let t = seed >>> 0;
   return function () {
     t += 0x6d2b79f5;
@@ -24,71 +24,135 @@ function seededRandom(seed) {
     return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
   };
 }
-
 function hashBufferToSeed(buffer) {
-  const hash = crypto.createHash('sha256').update(buffer).digest();
-  return hash.readUInt32BE(0);
+  return crypto.createHash('sha256').update(buffer).digest().readUInt32BE(0);
+}
+
+async function callGemini(model, parts, generationConfig) {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    const err = new Error('GEMINI_API_KEY 未設定');
+    err.code = 'NO_API_KEY';
+    throw err;
+  }
+  const res = await fetch(`${API_BASE}/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts }], ...(generationConfig ? { generationConfig } : {}) }),
+  });
+  const json = await res.json();
+  if (!res.ok) {
+    const err = new Error(json.error && json.error.message ? json.error.message : `Gemini API 錯誤 (${res.status})`);
+    err.status = res.status;
+    err.geminiStatus = json.error && json.error.status;
+    throw err;
+  }
+  const candidate = json.candidates && json.candidates[0];
+  if (!candidate) {
+    const err = new Error('Gemini 未回傳結果（可能被安全性過濾）');
+    err.code = 'NO_CANDIDATE';
+    err.promptFeedback = json.promptFeedback;
+    throw err;
+  }
+  return candidate;
+}
+
+function buildFallbackRecommendations(seedBuffer) {
+  // Safety net: used only if Gemini's picks don't map onto any real catalog items
+  // (e.g. it invented ids, or returned too few). Keeps the UI from showing an empty result.
+  const rand = seededRandom(hashBufferToSeed(seedBuffer));
+  const light = LIGHT_KEYS[Math.floor(rand() * LIGHT_KEYS.length)];
+  const matching = PRODUCTS.filter((p) => p.light === light || (p.lightExtra && p.lightExtra.includes(light)));
+  const pool = matching.length >= 3 ? matching : PRODUCTS;
+  const shuffled = [...pool].sort(() => rand() - 0.5);
+  return {
+    light,
+    picks: shuffled.slice(0, 3).map((p) => ({ id: p.id, qty: 1 + Math.floor(rand() * 2) })),
+  };
+}
+
+function buildRecommendations(picks) {
+  const seen = new Set();
+  const recommendations = [];
+  for (const pick of picks || []) {
+    const product = PRODUCTS_BY_ID[pick.id];
+    if (!product || seen.has(product.id)) continue;
+    seen.add(product.id);
+    const qty = Math.max(1, Math.min(5, Math.round(Number(pick.qty) || 1)));
+    recommendations.push({
+      id: product.id,
+      name: product.name,
+      en: product.en,
+      image: product.image,
+      light: product.light,
+      height: product.height,
+      price: product.price,
+      priceUnit: product.priceUnit,
+      qty,
+      subtotal: product.price * qty,
+    });
+  }
+  return recommendations;
 }
 
 /**
- * STUB: Analyze the uploaded photo and recommend plants from our catalog.
- *
- * TODO (when a real GEMINI_API_KEY is set): replace this body with a call to Gemini's
- * multimodal model, e.g.:
- *   POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
- *   Authorization / key: process.env.GEMINI_API_KEY (server-side only — never send this to the browser)
- *   Body: { contents: [{ parts: [
- *     { inline_data: { mime_type, data: base64Image } },
- *     { text: `你是植栽規劃顧問。這是一張空間照片，我們的植栽目錄如下（JSON）：${JSON.stringify(PRODUCTS)}。
- *              請估計這個空間適合的光照類型（sun/semi/shade）、大約可容納的植栽數量與尺寸，
- *              並從目錄中選出 3-5 項最適合的商品，回傳 JSON：
- *              { light, summary, picks: [{ id, qty }] }` }
- *   ]}] }
- * Parse the model's JSON response and map `picks` back onto the full PRODUCTS entries
- * (look up by id) to build `recommendations` the same way the stub does below.
- *
+ * Analyze the uploaded photo with Gemini and recommend plants from our catalog.
  * @param {Buffer} imageBuffer
  * @param {string} mimeType
- * @returns {Promise<{mock:boolean, light:string, summary:string, recommendations:Array, total:number}>}
  */
 async function analyzeSpace(imageBuffer, mimeType) {
-  const seed = hashBufferToSeed(imageBuffer);
-  const rand = seededRandom(seed);
-
-  const light = LIGHT_KEYS[Math.floor(rand() * LIGHT_KEYS.length)];
-  const matching = PRODUCTS.filter(
-    (p) => p.light === light || (p.lightExtra && p.lightExtra.includes(light))
-  );
-  const pool = matching.length >= 3 ? matching : PRODUCTS;
-
-  const shuffled = [...pool].sort(() => rand() - 0.5);
-  const pickCount = 3 + Math.floor(rand() * 2); // 3-4 items
-  const picks = shuffled.slice(0, pickCount).map((p) => ({
-    ...p,
-    qty: 1 + Math.floor(rand() * 2), // 1-2 each
-  }));
-
-  const recommendations = picks.map((p) => ({
+  const catalogForPrompt = PRODUCTS.map((p) => ({
     id: p.id,
     name: p.name,
-    en: p.en,
-    image: p.image,
     light: p.light,
+    lightExtra: p.lightExtra || [],
     height: p.height,
     price: p.price,
-    priceUnit: p.priceUnit,
-    qty: p.qty,
-    subtotal: p.price * p.qty,
   }));
+
+  const prompt =
+    `你是植栽空間規劃顧問。這是一張使用者上傳的空間照片（例如陽台、辦公室或居家一角）。\n` +
+    `我們的植栽租賃目錄如下（JSON，light 欄位為 sun=喜光耐曬型 / semi=明亮散光型 / shade=室內耐陰型）：\n` +
+    `${JSON.stringify(catalogForPrompt)}\n\n` +
+    `請根據照片判斷這個空間大致的採光類型，並從上面目錄中選出 3-5 項最適合這個空間的植栽（必須使用目錄中既有的 id，不可自創），` +
+    `並估計每項合理的數量。請只回傳以下 JSON 格式，不要有其他文字：\n` +
+    `{"light": "sun|semi|shade", "summary": "一段繁體中文說明，約60-100字，說明這個空間的特性與建議理由", "picks": [{"id": "目錄中的id", "qty": 數量}]}`;
+
+  let light = 'semi';
+  let summary = '';
+  let recommendations = [];
+
+  try {
+    const candidate = await callGemini(
+      ANALYZE_MODEL,
+      [{ inline_data: { mime_type: mimeType, data: imageBuffer.toString('base64') } }, { text: prompt }],
+      { responseMimeType: 'application/json' }
+    );
+    const text = (candidate.content.parts || []).map((p) => p.text || '').join('');
+    const parsed = JSON.parse(text);
+
+    if (LIGHT_KEYS.includes(parsed.light)) light = parsed.light;
+    if (typeof parsed.summary === 'string' && parsed.summary.trim()) summary = parsed.summary.trim();
+    recommendations = buildRecommendations(parsed.picks);
+  } catch (err) {
+    console.error('[analyzeSpace] Gemini call failed, falling back to catalog-based pick:', err.message);
+  }
+
+  if (recommendations.length === 0) {
+    const fallback = buildFallbackRecommendations(imageBuffer);
+    light = fallback.light;
+    recommendations = buildRecommendations(fallback.picks);
+    if (!summary) {
+      summary = `根據照片初步判斷，這個空間較適合「${LIGHT_LABEL[light]}」的植栽組合。以下是為您試算的建議搭配與每月訂閱報價，實際規劃仍需現場丈量與專人確認。`;
+    }
+  }
 
   const total = recommendations.reduce((sum, r) => sum + r.subtotal, 0);
 
   return {
-    mock: true,
+    mock: false,
     light,
-    summary:
-      `（此為模擬結果，尚未串接真實 AI 分析）根據照片初步判斷，這個空間較適合「${LIGHT_LABEL[light]}」的植栽組合。` +
-      `以下是為您試算的建議搭配與每月訂閱報價，實際規劃仍需現場丈量與專人確認。`,
+    summary,
     recommendations,
     total,
     priceUnit: '月',
@@ -96,35 +160,50 @@ async function analyzeSpace(imageBuffer, mimeType) {
 }
 
 /**
- * STUB: Generate a "what it could look like" mockup image with the recommended plants
- * composited into the uploaded photo.
+ * Generate a "what it could look like" mockup image with the recommended plants
+ * composited into the uploaded photo, via Gemini's image model.
  *
- * TODO (when a real GEMINI_API_KEY is set): replace this body with a call to Gemini's
- * image model (e.g. gemini-2.5-flash-image / "nano banana"), passing the original photo
- * plus a text prompt describing the chosen plants and asking for an edited image back,
- * e.g.:
- *   POST .../models/gemini-2.5-flash-image:generateContent
- *   Body: { contents: [{ parts: [
- *     { inline_data: { mime_type, data: base64Image } },
- *     { text: `請在這張照片中自然地加入以下植栽，維持原本的透視、光線與構圖：
- *              ${recommendations.map(r => `${r.name} x${r.qty}`).join('、')}` }
- *   ]}] }
- * The response contains inline image data (base64) — return that as `mockupImage` below
- * (data URL) instead of echoing the original photo, and set `isPlaceholderImage: false`.
+ * Note: image-generation models require a billing-enabled Google AI Studio / Cloud
+ * project -- the free tier has a hard 0 quota for them. If the call fails for any
+ * reason (quota, safety filter, model unavailable), this falls back to echoing the
+ * original photo back with isPlaceholderImage:true, so the feature degrades instead
+ * of breaking the page.
  *
  * @param {Buffer} imageBuffer
  * @param {string} mimeType
  * @param {Array} recommendations
- * @returns {Promise<{mockupImage:string, isPlaceholderImage:boolean}>}
  */
 async function generateMockupImage(imageBuffer, mimeType, recommendations) {
-  // Stub: just echo the uploaded photo back so the UI has something to show in the
-  // "mockup" slot. The frontend labels this clearly as a placeholder, not a real AI edit.
-  const dataUrl = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
-  return {
-    mockupImage: dataUrl,
-    isPlaceholderImage: true,
-  };
+  const plantList = recommendations.map((r) => `${r.name} x${r.qty}`).join('、');
+  const prompt =
+    `請在這張照片中，自然地加入以下植栽，維持原本的空間透視、光線與構圖，只新增植栽本身，` +
+    `不要改變照片中其他物件或背景：${plantList}`;
+
+  try {
+    const candidate = await callGemini(IMAGE_MODEL, [
+      { inline_data: { mime_type: mimeType, data: imageBuffer.toString('base64') } },
+      { text: prompt },
+    ]);
+    const imagePart = (candidate.content.parts || []).find((p) => p.inlineData || p.inline_data);
+    if (!imagePart) {
+      throw new Error('Gemini 未回傳圖片（可能為文字回覆或被安全性過濾）');
+    }
+    const inline = imagePart.inlineData || imagePart.inline_data;
+    const outMime = inline.mimeType || inline.mime_type || 'image/png';
+    return {
+      mockupImage: `data:${outMime};base64,${inline.data}`,
+      isPlaceholderImage: false,
+    };
+  } catch (err) {
+    console.error('[generateMockupImage] Gemini call failed, falling back to original photo:', err.message);
+    return {
+      mockupImage: `data:${mimeType};base64,${imageBuffer.toString('base64')}`,
+      isPlaceholderImage: true,
+      mockupError: err.geminiStatus === 'RESOURCE_EXHAUSTED'
+        ? 'AI 圖像生成目前需要已啟用帳單的 Google AI Studio 專案（免費額度為 0），因此暫時顯示原始照片。'
+        : 'AI 圖像生成暫時無法使用，顯示原始照片。',
+    };
+  }
 }
 
 module.exports = { analyzeSpace, generateMockupImage };
